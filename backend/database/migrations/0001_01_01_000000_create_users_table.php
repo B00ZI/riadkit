@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+
+            // Add riad_id and role here
+            $table->unsignedBigInteger('riad_id')->nullable();
+            $table->string('role')->default('owner');
+
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
