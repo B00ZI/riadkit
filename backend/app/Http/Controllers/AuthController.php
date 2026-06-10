@@ -50,4 +50,31 @@ class AuthController extends Controller
             'user' => $user->load('riad'), // Loads the associated riad data
         ], 201);
     }
+
+    
+    public function login(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|string|email',
+            'password' => 'required|string',
+        ]);
+
+        $user = User::where('email', $validated['email'])->first();
+
+        // Check if user exists and password is correct
+        if (!$user || !Hash::check($validated['password'], $user->password)) {
+            return response()->json([
+                'message' => 'Invalid login credentials'
+            ], 401);
+        }
+
+        // Generate token
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Login successful',
+            'access_token' => $token,
+            'user' => $user->load('riad'),
+        ]);
+    }
 }

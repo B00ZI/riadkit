@@ -6,11 +6,11 @@ export default function Home() {
 
   useEffect(() => {
     // Call your local Laravel API route
-    fetch("http://127.0.0.1:8000/api/handshake-test")
+    fetch("http://192.168.100.53:8000/api/test")
       .then((res) => res.json())
       .then((data) => {
         setMessage(data.message);
-      })
+    })  
       .catch((err) => {
         setMessage("Connection failed! Check your Laravel server or CORS settings.");
         console.error(err);
