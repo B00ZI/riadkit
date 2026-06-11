@@ -25,5 +25,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/rooms', [RoomController::class, 'index']);
     Route::post('/rooms', [RoomController::class, 'store']);
     Route::delete('/rooms/{id}', [RoomController::class, 'destroy']);
+
+
+    //resiption
+    Route::post('/rooms/{roomId}/checkout', [ReceptionController::class, 'checkout']);
+    Route::post('/rooms/{roomId}/checkin', [ReceptionController::class, 'checkin']);
 });
 
