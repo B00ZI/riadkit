@@ -10,28 +10,33 @@ class ReceptionController extends Controller
 {
     public function checkout(Request $request, $roomId)
     {
-        // 1. Get the room (ensure it belongs to the authenticated Riad)
         $room = $request->user()->riad->rooms()->findOrFail($roomId);
 
-        // 2. The Kill Switch: Set ALL sessions for this room to 'inactive'
+        // Terminology Alignment: We mark all sessions for this room as 'expired'
         GuestSession::where('room_id', $room->id)
-                    ->update(['status' => 'inactive']);
+                    ->update(['status' => 'expired']);
 
         return response()->json([
             'message' => 'Room checked out successfully. Guest access terminated.'
         ]);
     }
+
     public function checkin(Request $request, $roomId)
-{
-    $room = $request->user()->riad->rooms()->findOrFail($roomId);
+    {
+        $room = $request->user()->riad->rooms()->findOrFail($roomId);
 
-    // Create a NEW active session for this room
-    GuestSession::create([
-        'riad_id' => $room->riad_id,
-        'room_id' => $room->id,
-        'status' => 'active',
-    ]);
+        // Ensure there are no lingering active sessions before creating a new one
+        GuestSession::where('room_id', $room->id)->update(['status' => 'expired']);
 
-    return response()->json(['message' => 'Room checked in successfully.']);
-}
+        // Create a NEW active session
+        GuestSession::create([
+            'riad_id' => $room->riad_id,
+            'room_id' => $room->id,
+            'status' => 'active',
+        ]);
+
+        return response()->json([
+            'message' => 'Room checked in successfully.'
+        ]);
+    }
 }
