@@ -15,4 +15,9 @@ class Room extends Model
     {
         return $this->belongsTo(Riad::class);
     }
+
+    public function sessions()
+    {
+        return $this->hasMany(GuestSession::class);
+    }
 }

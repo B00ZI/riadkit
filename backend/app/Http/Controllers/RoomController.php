@@ -1,18 +1,36 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-class RoomController extends Controller 
+class RoomController extends Controller
 {
-    // Get all rooms for the logged-in owner's Riad
+    // List all rooms for owners and receptionists including their active session status
     public function index(Request $request)
     {
-        $rooms = $request->user()->riad->rooms()->orderBy('room_number')->get();
-        
+        // Fetch rooms and load only their LATEST active session (if any)
+        $rooms = $request->user()->riad->rooms()
+            ->with(['sessions' => function ($query) {
+                $query->where('status', 'active');
+            }])
+            ->orderBy('room_number')
+            ->get();
+
+        // Map the rooms to cleanly include an 'is_active' boolean
+        $roomsWithStatus = $rooms->map(function ($room) {
+            return [
+                'id' => $room->id,
+                'room_number' => $room->room_number,
+                'type' => $room->type,
+                'qr_token' => $room->qr_token,
+                'is_active' => $room->sessions->isNotEmpty(), // True if there is an active session
+            ];
+        });
+
         return response()->json([
-            'rooms' => $rooms
+            'rooms' => $roomsWithStatus,
         ]);
     }
 
@@ -29,12 +47,12 @@ class RoomController extends Controller
             'room_number' => $validated['room_number'],
             'type' => $validated['type'],
             'qr_token' => Str::random(16), // Generate a random 16-character string for the QR!
-            'status' => 'available'
+            'status' => 'available',
         ]);
 
         return response()->json([
             'message' => 'Room added successfully',
-            'room' => $room
+            'room' => $room,
         ], 201);
     }
 
@@ -43,11 +61,11 @@ class RoomController extends Controller
     {
         // Find the room, making sure it belongs to THIS riad!
         $room = $request->user()->riad->rooms()->findOrFail($id);
-        
+
         $room->delete();
 
         return response()->json([
-            'message' => 'Room deleted successfully'
+            'message' => 'Room deleted successfully',
         ]);
     }
 }
