@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-class RoomController extends Controller
+class RoomController extends Controller 
 {
     // Get all rooms for the logged-in owner's Riad
     public function index(Request $request)
