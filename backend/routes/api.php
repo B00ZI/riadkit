@@ -36,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Rooms
     Route::get('/rooms', [RoomController::class, 'index']);
     Route::post('/rooms', [RoomController::class, 'store']);
+    Route::put('/rooms/{id}', [RoomController::class, 'update']);
     Route::delete('/rooms/{id}', [RoomController::class, 'destroy']);
 
     //manage categories, menu items, services, and excursions

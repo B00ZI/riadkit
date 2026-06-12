@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Plus, QrCode } from "lucide-react";
+import { Trash2, Plus, QrCode, Pencil, X } from "lucide-react";
 
 interface Room {
   id: number;
@@ -18,7 +18,8 @@ interface Room {
 export default function RoomsPage() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<Room | null>(null); // Track the room being edited
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
@@ -55,16 +56,39 @@ export default function RoomsPage() {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  // 2. Add a new Room
+  // Set up form for editing
+  const handleStartEdit = (room: Room) => {
+    setEditingRoom(room);
+    setFormData({
+      room_number: room.room_number,
+      type: room.type,
+    });
+    setError("");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingRoom(null);
+    setFormData({ room_number: "", type: "" });
+    setError("");
+  };
+
+  // 2. Add or Update Room Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setAdding(true);
+    setSubmitting(true);
     setError("");
     const token = Cookies.get("riadkit_token");
 
+    const isEditing = !!editingRoom;
+    const url = isEditing 
+      ? `http://192.168.100.53:8000/api/rooms/${editingRoom.id}`
+      : "http://192.168.100.53:8000/api/rooms";
+    
+    const method = isEditing ? "PUT" : "POST";
+
     try {
-      const res = await fetch("http://192.168.100.53:8000/api/rooms", {
-        method: "POST",
+      const res = await fetch(url, {
+        method: method,
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",
@@ -76,16 +100,24 @@ export default function RoomsPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || "Failed to add room");
+        throw new Error(data.message || "Failed to save room");
       }
 
-      // Append new room and reset form
-      setRooms([...rooms, data.room]);
+      if (isEditing) {
+        // Update the edited room in state
+        setRooms(rooms.map((room) => (room.id === editingRoom.id ? data.room : room)));
+        setEditingRoom(null);
+      } else {
+        // Append new room to list
+        setRooms([...rooms, data.room]);
+      }
+
+      // Reset form
       setFormData({ room_number: "", type: "" });
     } catch (err: any) {
       setError(err.message);
     } finally {
-      setAdding(false);
+      setSubmitting(false);
     }
   };
 
@@ -105,6 +137,9 @@ export default function RoomsPage() {
 
       if (res.ok) {
         setRooms(rooms.filter((room) => room.id !== id));
+        if (editingRoom?.id === id) {
+          handleCancelEdit();
+        }
       }
     } catch (err) {
       alert("Failed to delete room");
@@ -124,11 +159,17 @@ export default function RoomsPage() {
 
       <div className="grid md:grid-cols-3 gap-8 items-start">
         
-        {/* Left Column: Form to Add Room */}
-        <Card className="md:col-span-1">
+        {/* Left Column: Form to Add/Edit Room */}
+        <Card className="md:col-span-1 border-primary/20">
           <CardHeader>
-            <CardTitle className="text-lg">Add New Room</CardTitle>
-            <CardDescription>Create a room to instantly generate its secure QR token.</CardDescription>
+            <CardTitle className="text-lg">
+              {editingRoom ? "Edit Room Details" : "Add New Room"}
+            </CardTitle>
+            <CardDescription>
+              {editingRoom 
+                ? "Update room details. QR token will remain unchanged." 
+                : "Create a room to instantly generate its secure QR token."}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -144,10 +185,20 @@ export default function RoomsPage() {
                 <Input id="type" placeholder="Double Room, Suite, Single..." required value={formData.type} onChange={handleChange} />
               </div>
 
-              <Button type="submit" className="w-full flex gap-2" disabled={adding}>
-                <Plus className="w-4 h-4" />
-                {adding ? "Adding..." : "Add Room"}
-              </Button>
+              <div className="flex gap-2 pt-2">
+                {editingRoom && (
+                  <Button type="button" variant="outline" className="flex-1 gap-1" onClick={handleCancelEdit}>
+                    <X className="w-4 h-4" />
+                    Cancel
+                  </Button>
+                )}
+                <Button type="submit" className="flex-1 gap-2" disabled={submitting}>
+                  {editingRoom ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  {submitting 
+                    ? (editingRoom ? "Updating..." : "Adding...") 
+                    : (editingRoom ? "Update Room" : "Add Room")}
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
@@ -162,27 +213,35 @@ export default function RoomsPage() {
           ) : (
             <div className="grid sm:grid-cols-2 gap-4">
               {rooms.map((room) => {
-                // The URL the guest will actually visit when they scan the QR code!
                 const guestPortalUrl = `http://192.168.100.53:3000/room/${room.qr_token}`;
-                // Direct free QR Code generation API
                 const qrCodeImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(guestPortalUrl)}`;
 
                 return (
-                  <Card key={room.id} className="flex flex-col justify-between">
+                  <Card key={room.id} className={`flex flex-col justify-between transition-all ${editingRoom?.id === room.id ? 'ring-2 ring-primary border-primary' : ''}`}>
                     <CardHeader className="pb-2">
                       <div className="flex justify-between items-start">
                         <div>
                           <CardTitle className="text-xl font-bold">{room.room_number}</CardTitle>
                           <p className="text-sm text-muted-foreground mt-1 capitalize">{room.type}</p>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => handleDelete(room.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                            onClick={() => handleStartEdit(room)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleDelete(room.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
 
