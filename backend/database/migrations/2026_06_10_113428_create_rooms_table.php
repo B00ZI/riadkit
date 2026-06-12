@@ -18,10 +18,13 @@ return new class extends Migration
             $table->foreignId('riad_id')->constrained()->onDelete('cascade');
 
             $table->string('room_number');
-            $table->string('type'); // e.g., "Suite", "Standard"
-            $table->string('qr_token'); // The secret code for the QR link
+            $table->string('type'); 
+            $table->string('qr_token'); 
             $table->string('status')->default('available');
 
+            // For guest session management
+            $table->string('current_session_id')->nullable();
+            $table->enum('session_status', ['active', 'expired'])->default('expired');
             $table->timestamps();
         });
     }
