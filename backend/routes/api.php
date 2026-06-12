@@ -3,15 +3,23 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RiadController;
 use App\Http\Controllers\RoomController;
-use App\Http\Controllers\ReceptionController; // Added missing import
-use App\Http\Controllers\GuestSessionController; // Added missing import
+use App\Http\Controllers\ReceptionController; 
+use App\Http\Controllers\GuestPortalController ; 
+
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\MenuItemController;
+use App\Http\Controllers\Api\ServiceController;
+use App\Http\Controllers\Api\ExcursionController;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Public Routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::post('/guest/bootstrap', [GuestSessionController::class, 'bootstrap']); // Added missing route
+
+// Guest Portal Route to get evrything needed for the guest's and validate the session
+Route::post('/guest/bootstrap', [GuestPortalController ::class, 'show']); 
 
 // Protected Routes (Require Sanctum Token for Owners/Staff)
 Route::middleware('auth:sanctum')->group(function () {
@@ -29,6 +37,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/rooms', [RoomController::class, 'index']);
     Route::post('/rooms', [RoomController::class, 'store']);
     Route::delete('/rooms/{id}', [RoomController::class, 'destroy']);
+
+    //manage categories, menu items, services, and excursions
+    Route::apiResource('categories', CategoryController::class);
+    Route::apiResource('menu-items', MenuItemController::class);
+    Route::apiResource('services', ServiceController::class);
+    Route::apiResource('excursions', ExcursionController::class);
 
     // Reception Operations
     Route::post('/rooms/{roomId}/checkout', [ReceptionController::class, 'checkout']);
