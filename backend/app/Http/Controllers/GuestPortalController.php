@@ -1,31 +1,28 @@
 <?php
-namespace App\Http\Controllers;
 
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
 use App\Models\Room;
-use App\Models\GuestSession;
 use App\Models\Category;
 use App\Models\Service;
 use App\Models\Excursion;
 use Illuminate\Http\Request;
 
-class GuestSessionController extends Controller
+class GuestPortalController extends Controller
 {
-    public function show(Request $request)
+    public function show(Request $request, string $qr_token)
     {
-        $validated = $request->validate([
-            'qr_token' => 'required|string',
-            'session_id' => 'nullable|integer' // Accept the old session cookie
-        ]);
+        // Find the room using the secure QR token
+        $room = Room::with('riad')->where('qr_token', $qr_token)->first();
 
-        // Fetch Room with its Riad relation
-        $room = Room::with('riad')->where('qr_token', $validated['qr_token'])->first();
         if (!$room) {
-            return response()->json(['message' => 'Invalid QR Code'], 404);
+            return response()->json(['message' => 'Invalid Room Token'], 404);
         }
 
         $riad = $room->riad;
 
-        // Fetch Public Portal Data (Always visible to anyone in the room)
+        // Fetch Public Portal Data
         $menu = Category::where('riad_id', $riad->id)
             ->where('type', 'menu')
             ->orderBy('sort_order')
@@ -42,7 +39,6 @@ class GuestSessionController extends Controller
             ->where('is_available', true)
             ->get();
 
-        // Base payload always returned
         $payload = [
             'room_id' => $room->id,
             'room_number' => $room->room_number,
@@ -61,37 +57,30 @@ class GuestSessionController extends Controller
             'excursions' => $excursions,
         ];
 
-        // 1. �️ STICKY TOKEN DEFENSE: Check their specific cookie first
-        if ($request->filled('session_id')) {
-            $existingSession = GuestSession::where('id', $validated['session_id'])
-                                           ->where('room_id', $room->id)
-                                           ->first();
+        $clientSessionId = $request->query('session_id');
 
-            // If their exact session is expired, they remain permanently blocked from ordering
-            if ($existingSession && $existingSession->status === 'expired') {
+        // �️ STICKY TOKEN DEFENSE: Validate the incoming session cookie
+        if ($clientSessionId) {
+            // Case A: The cookie matches the room's current session
+            if ($clientSessionId === $room->current_session_id) {
                 return response()->json(array_merge($payload, [
-                    'session_id' => $existingSession->id,
-                    'session_status' => 'expired'
+                    'session_id' => $room->current_session_id,
+                    'session_status' => $room->session_status // Can be 'active' or 'expired'
                 ]));
             }
-        }
 
-        // 2. Otherwise, look for the current active session for this room
-        $session = GuestSession::where('room_id', $room->id)
-                               ->where('status', 'active')
-                               ->latest()
-                               ->first();
-
-        if (!$session) {
+            // Case B: Cookie mismatch (Guest belongs to an older, checked-out stay)
             return response()->json(array_merge($payload, [
-                'session_id' => null,
+                'session_id' => $clientSessionId,
                 'session_status' => 'expired'
             ]));
         }
 
+        // Case C: No cookie in browser. Return current room's session status.
+        // If the room has an active session, the guest frontend will "adopt" this active session ID.
         return response()->json(array_merge($payload, [
-            'session_id' => $session->id,
-            'session_status' => $session->status
+            'session_id' => $room->session_status === 'active' ? $room->current_session_id : null,
+            'session_status' => $room->session_status
         ]));
     }
 }

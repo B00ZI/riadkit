@@ -3,40 +3,51 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
-use App\Models\GuestSession;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class ReceptionController extends Controller
 {
-    public function checkout(Request $request, $roomId)
+    public function checkIn(Request $request, Room $room)
     {
-        $room = $request->user()->riad->rooms()->findOrFail($roomId);
+        // Ensure the room belongs to the user's Riad
+        if ($room->riad_id !== $request->user()->riad_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
-        // Terminology Alignment: We mark all sessions for this room as 'expired'
-        GuestSession::where('room_id', $room->id)
-                    ->update(['status' => 'expired']);
+        $room->update([
+            'status' => 'Occupied',
+            'current_session_id' => Str::random(16), 
+            'session_status' => 'active',
+        ]);
+
+        // Refresh comes AFTER update to fix stale data
+        $room->refresh();
 
         return response()->json([
-            'message' => 'Room checked out successfully. Guest access terminated.'
+            'message' => 'Checked in successfully',
+            'room' => $room,
         ]);
     }
 
-    public function checkin(Request $request, $roomId)
+    public function checkOut(Request $request, Room $room)
     {
-        $room = $request->user()->riad->rooms()->findOrFail($roomId);
+        // Ensure the room belongs to the user's Riad
+        if ($room->riad_id !== $request->user()->riad_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
-        // Ensure there are no lingering active sessions before creating a new one
-        GuestSession::where('room_id', $room->id)->update(['status' => 'expired']);
-
-        // Create a NEW active session
-        GuestSession::create([
-            'riad_id' => $room->riad_id,
-            'room_id' => $room->id,
-            'status' => 'active',
+        $room->update([
+            'status' => 'Vacant',
+            'session_status' => 'expired', 
         ]);
 
+        // Refresh comes AFTER update to fix stale data
+        $room->refresh();
+
         return response()->json([
-            'message' => 'Room checked in successfully.'
+            'message' => 'Checked out successfully',
+            'room' => $room,
         ]);
     }
 }
