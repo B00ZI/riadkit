@@ -1,58 +1,87 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# � RiadKit API Documentation
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+The RiadKit backend is a Laravel 11 REST API. It is divided into two main parts:
+1. **Protected Owner/Staff API** (Secured via Laravel Sanctum).
+2. **Public Guest API** (Secured via QR Tokens and Sticky Session Defense).
 
-## About Laravel
+**Base URL:** `http://192.168.100.53:8000/api`
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## �️ Authentication
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Riad owners and reception staff must authenticate to manage the Riad.
 
-## Learning Laravel
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/register` | Creates a new Riad and User (Owner). Returns a Bearer Token. |
+| `POST` | `/login` | Authenticates an existing user and returns a Bearer Token. |
+| `GET` | `/user` | Returns the currently authenticated user payload. *(Requires Token)* |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+> **Note on Authentication:** For all protected routes below, include the header: 
+> `Authorization: Bearer {your_token_here}`
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## �️ Live Reception Desk & Rooms *(Protected)*
 
-## Agentic Development
+Manage physical rooms and handle guest check-ins, check-outs, and real-time orders.
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### Room Operations
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/rooms` | List all rooms for the Riad, including `is_active` status and `qr_token`. |
+| `POST` | `/rooms` | Add a physical room. Automatically generates a secure 16-char `qr_token`. |
+| `POST` | `/rooms/{room}/checkin` | Checks a guest in. Updates status to `Occupied` and generates a new `current_session_id`. |
+| `POST` | `/rooms/{room}/checkout` | Checks a guest out. Updates status to `Vacant` and expires the session. |
 
-```bash
-composer require laravel/boost --dev
+### Live Request Feed
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/requests` | Fetch all `pending` and `in_progress` guest requests for the Live Desk. |
+| `PATCH` | `/requests/{id}` | Update a request status (e.g., mark as `completed` or `cancelled`). |
 
-php artisan boost:install
+---
+
+## �️ Menus, Services & Excursions *(Protected)*
+
+Standard CRUD operations for the Riad's offerings. All queries are automatically scoped to the authenticated user's `riad_id` for strict multi-tenant security.
+
+| Method | Endpoints (Base) | Features |
+| :--- | :--- | :--- |
+| `GET`, `POST`, `PUT`, `DEL` | `/categories` | Group items into Menus or Services. |
+| `GET`, `POST`, `PUT`, `DEL` | `/menu-items` | Food and beverage items with pricing. |
+| `GET`, `POST`, `PUT`, `DEL` | `/services` | In-house requests (e.g., Towels, Cleaning). Includes a `requires_quantity` toggle. |
+| `GET`, `POST`, `PUT`, `DEL` | `/excursions` | Local tours with duration and pricing. |
+
+---
+
+## � Guest Portal *(Public / Session Secured)*
+
+These routes are accessed by guests scanning the QR code in their room. They do not use standard login tokens; instead, they rely on our **Sticky Token Defense**.
+
+### 1. Bootstrap the Portal
+`GET /guest/portal/{qr_token}?session_id={cookie_session_id}`
+
+This is the single-request workhorse for the Next.js frontend.
+* **If `session_id` matches the room's active session:** Returns the Riad details, Menus, Services, Excursions, and `session_status: "active"`.
+* **If `session_id` does NOT match or is missing:** Returns the data so they can still browse, but sets `session_status: "expired"` (disabling ordering UI).
+
+### 2. Submit a Request
+`POST /guest/requests`
+
+Allows an active guest to order food, request services, or book excursions.
+
+**Request Body:**
+```json
+{
+  "qr_token": "A1B2C3D4E5F6G7H8",
+  "session_id": "random16charSession",
+  "type": "menu", // 'menu', 'service', or 'excursion'
+  "item_id": 12,
+  "quantity": 2,
+  "notes": "No sugar in the mint tea, please."
+}
 ```
-
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+**Sticky Token Defense in Action:** 
+If a guest checks out, the room's session ID changes. If the old guest tries to hit this endpoint using their old `session_id` cookie, the API intercepts it and returns `403 Forbidden`, preventing them from sending fake requests to the new guest's room.
