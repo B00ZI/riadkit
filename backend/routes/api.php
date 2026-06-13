@@ -18,8 +18,10 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// Guest Portal Route to get evrything needed for the guest's and validate the session
-Route::post('/guest/bootstrap', [GuestPortalController ::class, 'show']); 
+// Guest Portal Route
+Route::get('/guest/portal/{qr_token}', [GuestPortalController::class, 'show']);
+
+
 
 // Protected Routes (Require Sanctum Token for Owners/Staff)
 Route::middleware('auth:sanctum')->group(function () {
@@ -46,6 +48,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('excursions', ExcursionController::class);
 
     // Reception Operations
-    Route::post('/rooms/{roomId}/checkout', [ReceptionController::class, 'checkout']);
-    Route::post('/rooms/{roomId}/checkin', [ReceptionController::class, 'checkin']);
+    Route::post('/rooms/{room}/checkin', [ReceptionController::class, 'checkIn']);
+    Route::post('/rooms/{room}/checkout', [ReceptionController::class, 'checkOut']);
 });
