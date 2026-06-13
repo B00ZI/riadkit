@@ -1,16 +1,15 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\RiadController;
-use App\Http\Controllers\RoomController;
-use App\Http\Controllers\ReceptionController; 
-use App\Http\Controllers\GuestPortalController ; 
-
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\ExcursionController;
+use App\Http\Controllers\Api\GuestRequestController;
 use App\Http\Controllers\Api\MenuItemController;
 use App\Http\Controllers\Api\ServiceController;
-use App\Http\Controllers\Api\ExcursionController;
-
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\GuestPortalController;
+use App\Http\Controllers\ReceptionController;
+use App\Http\Controllers\RiadController;
+use App\Http\Controllers\RoomController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -20,12 +19,11 @@ Route::post('/login', [AuthController::class, 'login']);
 
 // Guest Portal Route
 Route::get('/guest/portal/{qr_token}', [GuestPortalController::class, 'show']);
-
-
+Route::post('/guest/requests', [GuestRequestController::class, 'store']);
 
 // Protected Routes (Require Sanctum Token for Owners/Staff)
 Route::middleware('auth:sanctum')->group(function () {
-    
+
     // User Info
     Route::get('/user', function (Request $request) {
         return $request->user();
@@ -34,14 +32,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // Riad Settings
     Route::get('/settings', [RiadController::class, 'show']);
     Route::put('/settings', [RiadController::class, 'update']);
-    
+
     // Rooms
     Route::get('/rooms', [RoomController::class, 'index']);
     Route::post('/rooms', [RoomController::class, 'store']);
     Route::put('/rooms/{id}', [RoomController::class, 'update']);
     Route::delete('/rooms/{id}', [RoomController::class, 'destroy']);
 
-    //manage categories, menu items, services, and excursions
+    // manage categories, menu items, services, and excursions
     Route::apiResource('categories', CategoryController::class);
     Route::apiResource('menu-items', MenuItemController::class);
     Route::apiResource('services', ServiceController::class);
@@ -50,4 +48,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Reception Operations
     Route::post('/rooms/{room}/checkin', [ReceptionController::class, 'checkIn']);
     Route::post('/rooms/{room}/checkout', [ReceptionController::class, 'checkOut']);
+    
+    // Guest Requests Management
+    Route::get('/requests', [GuestRequestController::class, 'index']);
+    Route::patch('/requests/{id}', [GuestRequestController::class, 'update']);
 });

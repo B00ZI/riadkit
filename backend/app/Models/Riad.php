@@ -4,10 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\Category;
-use App\Models\MenuItem;
-use App\Models\Service;
-use App\Models\Excursion;
 
 class Riad extends Model
 {
@@ -41,5 +37,10 @@ class Riad extends Model
     public function excursions(): HasMany
     {
         return $this->hasMany(Excursion::class);
+    }
+
+    public function guestRequests(): HasMany
+    {
+        return $this->hasMany(GuestRequest::class);
     }
 }

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Wifi, Phone, Copy, Check, AlertTriangle, Menu, Sparkles, 
-  Navigation, ArrowLeft, Plus, Minus, Bell, HeartHandshake 
+  Navigation, ArrowLeft, Plus, Minus, Bell, HeartHandshake, Loader2 
 } from "lucide-react";
 
 interface RiadDetails {
@@ -56,7 +56,7 @@ export default function GuestPortal() {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
 
-  // Navigation State: "home" | "menu" | "services" | "excursions"
+  // Navigation State
   const [currentView, setCurrentView] = useState<"home" | "menu" | "services" | "excursions">("home");
 
   // Portal State
@@ -69,8 +69,12 @@ export default function GuestPortal() {
   const [services, setServices] = useState<Service[]>([]);
   const [excursions, setExcursions] = useState<Excursion[]>([]);
 
-  // Simple quantity tracking helper for in-room services
+  // Order state tracking
   const [quantities, setQuantities] = useState<Record<number, number>>({});
+  
+  // Track which item is currently submitting so we can show a loading spinner
+  const [submittingItemId, setSubmittingItemId] = useState<string | null>(null);
+  const [successItemId, setSuccessItemId] = useState<string | null>(null);
 
   useEffect(() => {
     const bootstrapPortal = async () => {
@@ -131,6 +135,55 @@ export default function GuestPortal() {
     });
   };
 
+  // � New Dispatch Function
+  const submitRequest = async (type: "menu" | "service" | "excursion", itemId: number, quantity: number = 1) => {
+    const sessionId = Cookies.get("riadkit_session_id");
+    if (!sessionId) {
+      alert("Session expired. Please reload the page.");
+      return;
+    }
+
+    const uniqueId = `${type}-${itemId}`;
+    setSubmittingItemId(uniqueId);
+
+    try {
+      const res = await fetch("http://192.168.100.53:8000/api/guest/requests", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({
+          qr_token: token,
+          session_id: sessionId,
+          type: type,
+          item_id: itemId,
+          quantity: quantity,
+          notes: "", // Optional: We can add an input for this later if desired
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to send request.");
+      }
+
+      // Show temporary success checkmark
+      setSuccessItemId(uniqueId);
+      setTimeout(() => setSuccessItemId(null), 3000);
+
+      // Reset quantity if it was a service
+      if (type === "service") {
+        setQuantities((prev) => ({ ...prev, [itemId]: 1 }));
+      }
+
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setSubmittingItemId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
@@ -161,7 +214,7 @@ export default function GuestPortal() {
     <div className="min-h-screen bg-gray-50 flex justify-center pb-12">
       <div className="w-full max-w-md bg-white shadow-xl min-h-screen flex flex-col">
         
-        {/* Header (Adapts dynamically if we are in a sub-view) */}
+        {/* Header */}
         <div className="bg-emerald-950 text-white p-6 rounded-b-3xl relative overflow-hidden shadow-lg">
           <div className="absolute top-0 right-0 p-4 opacity-10">
             <Sparkles className="w-32 h-32" />
@@ -197,10 +250,10 @@ export default function GuestPortal() {
           )}
         </div>
 
-        {/* Guest Portal Dynamic View Container */}
+        {/* Dynamic Views */}
         <div className="flex-1 p-5 space-y-6">
 
-          {/* Sticky Token Defense checkout banner */}
+          {/* Sticky Token Defense Banner */}
           {sessionStatus === "expired" && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
               <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
@@ -213,10 +266,9 @@ export default function GuestPortal() {
             </div>
           )}
 
-          {/* ================= HOME VIEW ================= */}
+          {/* HOME VIEW */}
           {currentView === "home" && (
             <>
-              {/* WiFi Card */}
               {(riad.wifiName || riad.wifiPassword) && (
                 <Card className="border-emerald-100 bg-emerald-50/30 overflow-hidden">
                   <CardContent className="p-4 flex items-center justify-between">
@@ -230,87 +282,47 @@ export default function GuestPortal() {
                       </div>
                     </div>
                     {riad.wifiPassword && (
-                      <Button 
-                        onClick={copyWifiPassword} 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex gap-1.5 items-center border-emerald-200 text-emerald-800 hover:bg-emerald-100/50"
-                      >
-                        {copied ? (
-                          <>
-                            <Check className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Copied</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3.5 h-3.5" />
-                            <span>Copy</span>
-                          </>
-                        )}
+                      <Button onClick={copyWifiPassword} variant="outline" size="sm" className="flex gap-1.5 items-center border-emerald-200 text-emerald-800 hover:bg-emerald-100/50">
+                        {copied ? <><Check className="w-3.5 h-3.5 text-emerald-600" /><span>Copied</span></> : <><Copy className="w-3.5 h-3.5" /><span>Copy</span></>}
                       </Button>
                     )}
                   </CardContent>
                 </Card>
               )}
 
-              {/* Grid of Browse Cards */}
               <div className="space-y-3">
                 <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Browse Offerings</h3>
-                
                 <div className="grid grid-cols-1 gap-3">
-                  
-                  {/* Food Menu Card */}
                   <Card onClick={() => setCurrentView("menu")} className="hover:shadow-md transition-all cursor-pointer border-emerald-50 flex items-center p-4">
-                    <div className="bg-amber-100 text-amber-800 p-3 rounded-xl mr-4">
-                      <Menu className="w-6 h-6" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-gray-800 text-base">Food & Drinks</h4>
-                      <p className="text-xs text-gray-500 mt-0.5">Explore local tagines, beverages, and appetizers.</p>
-                    </div>
-                    <Badge variant="secondary">{menu.length} sections</Badge>
+                    <div className="bg-amber-100 text-amber-800 p-3 rounded-xl mr-4"><Menu className="w-6 h-6" /></div>
+                    <div className="flex-1"><h4 className="font-bold text-gray-800 text-base">Food & Drinks</h4><p className="text-xs text-gray-500 mt-0.5">Explore local tagines, beverages, and appetizers.</p></div>
                   </Card>
-
-                  {/* Room Services Card */}
                   <Card onClick={() => setCurrentView("services")} className="hover:shadow-md transition-all cursor-pointer border-indigo-50 flex items-center p-4">
-                    <div className="bg-indigo-100 text-indigo-800 p-3 rounded-xl mr-4">
-                      <HeartHandshake className="w-6 h-6" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-gray-800 text-base">Room Services</h4>
-                      <p className="text-xs text-gray-500 mt-0.5">Request towels, cleaning, or general amenities.</p>
-                    </div>
-                    <Badge variant="secondary">{services.length} services</Badge>
+                    <div className="bg-indigo-100 text-indigo-800 p-3 rounded-xl mr-4"><HeartHandshake className="w-6 h-6" /></div>
+                    <div className="flex-1"><h4 className="font-bold text-gray-800 text-base">Room Services</h4><p className="text-xs text-gray-500 mt-0.5">Request towels, cleaning, or general amenities.</p></div>
                   </Card>
-
-                  {/* Excursions Card */}
                   <Card onClick={() => setCurrentView("excursions")} className="hover:shadow-md transition-all cursor-pointer border-purple-50 flex items-center p-4">
-                    <div className="bg-purple-100 text-purple-800 p-3 rounded-xl mr-4">
-                      <Navigation className="w-6 h-6" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-gray-800 text-base">Local Excursions</h4>
-                      <p className="text-xs text-gray-500 mt-0.5">Book quad tours, desert trips, and cooking classes.</p>
-                    </div>
-                    <Badge variant="secondary">{excursions.length} tours</Badge>
+                    <div className="bg-purple-100 text-purple-800 p-3 rounded-xl mr-4"><Navigation className="w-6 h-6" /></div>
+                    <div className="flex-1"><h4 className="font-bold text-gray-800 text-base">Local Excursions</h4><p className="text-xs text-gray-500 mt-0.5">Book quad tours, desert trips, and cooking classes.</p></div>
                   </Card>
-
                 </div>
               </div>
             </>
           )}
 
-          {/* ================= FOOD MENU VIEW ================= */}
+          {/* MENU VIEW */}
           {currentView === "menu" && (
             <div className="space-y-6">
-              {menu.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">No menu items loaded yet.</div>
-              ) : (
-                menu.map((category) => (
-                  <div key={category.id} className="space-y-3">
-                    <h3 className="text-sm font-bold text-emerald-800 border-b pb-1 uppercase tracking-wider">{category.name}</h3>
-                    <div className="space-y-3">
-                      {category.menu_items?.map((item) => (
+              {menu.map((category) => (
+                <div key={category.id} className="space-y-3">
+                  <h3 className="text-sm font-bold text-emerald-800 border-b pb-1 uppercase tracking-wider">{category.name}</h3>
+                  <div className="space-y-3">
+                    {category.menu_items?.map((item) => {
+                      const uniqueId = `menu-${item.id}`;
+                      const isSubmitting = submittingItemId === uniqueId;
+                      const isSuccess = successItemId === uniqueId;
+
+                      return (
                         <div key={item.id} className="flex justify-between items-start gap-4">
                           <div className="space-y-1">
                             <h4 className="font-bold text-gray-800 text-sm">{item.name}</h4>
@@ -319,27 +331,35 @@ export default function GuestPortal() {
                           <div className="text-right shrink-0">
                             <span className="text-sm font-bold text-emerald-700">{item.price} MAD</span>
                             {sessionStatus === "active" && (
-                              <Button size="sm" variant="outline" className="h-7 text-[11px] block mt-2 border-emerald-200 text-emerald-800 hover:bg-emerald-50">
-                                Add
+                              <Button 
+                                size="sm" 
+                                variant={isSuccess ? "default" : "outline"} 
+                                className={`h-7 text-[11px] block mt-2 w-full ${isSuccess ? "bg-emerald-500 text-white" : "border-emerald-200 text-emerald-800 hover:bg-emerald-50"}`}
+                                disabled={isSubmitting || isSuccess}
+                                onClick={() => submitRequest("menu", item.id, 1)}
+                              >
+                                {isSubmitting ? <Loader2 className="w-3 h-3 animate-spin mx-auto" /> : isSuccess ? <Check className="w-3 h-3 mx-auto" /> : "Order"}
                               </Button>
                             )}
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
-                ))
-              )}
+                </div>
+              ))}
             </div>
           )}
 
-          {/* ================= ROOM SERVICES VIEW ================= */}
+          {/* SERVICES VIEW */}
           {currentView === "services" && (
             <div className="space-y-4">
-              {services.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">No services loaded yet.</div>
-              ) : (
-                services.map((srv) => (
+              {services.map((srv) => {
+                const uniqueId = `service-${srv.id}`;
+                const isSubmitting = submittingItemId === uniqueId;
+                const isSuccess = successItemId === uniqueId;
+
+                return (
                   <Card key={srv.id} className="border-gray-100">
                     <CardContent className="p-4 flex justify-between items-center">
                       <div className="space-y-1 pr-2">
@@ -352,45 +372,37 @@ export default function GuestPortal() {
                         <div className="flex flex-col items-end gap-2 shrink-0">
                           {srv.requires_quantity ? (
                             <div className="flex items-center gap-2 border rounded-lg p-1 bg-gray-50">
-                              <Button 
-                                size="icon" 
-                                variant="ghost" 
-                                className="w-6 h-6 rounded-md hover:bg-white"
-                                onClick={() => handleQtyChange(srv.id, -1)}
-                              >
-                                <Minus className="w-3 h-3" />
-                              </Button>
+                              <Button size="icon" variant="ghost" className="w-6 h-6 rounded-md hover:bg-white" onClick={() => handleQtyChange(srv.id, -1)}><Minus className="w-3 h-3" /></Button>
                               <span className="text-xs font-bold w-4 text-center">{quantities[srv.id] || 1}</span>
-                              <Button 
-                                size="icon" 
-                                variant="ghost" 
-                                className="w-6 h-6 rounded-md hover:bg-white"
-                                onClick={() => handleQtyChange(srv.id, 1)}
-                              >
-                                <Plus className="w-3 h-3" />
-                              </Button>
+                              <Button size="icon" variant="ghost" className="w-6 h-6 rounded-md hover:bg-white" onClick={() => handleQtyChange(srv.id, 1)}><Plus className="w-3 h-3" /></Button>
                             </div>
                           ) : null}
-                          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white flex gap-1 items-center h-8 text-xs">
-                            <Bell className="w-3 h-3" />
-                            Request
+                          <Button 
+                            size="sm" 
+                            className={`flex gap-1 items-center h-8 text-xs ${isSuccess ? "bg-emerald-500" : "bg-emerald-600 hover:bg-emerald-700"}`}
+                            disabled={isSubmitting || isSuccess}
+                            onClick={() => submitRequest("service", srv.id, quantities[srv.id] || 1)}
+                          >
+                            {isSubmitting ? <Loader2 className="w-3 h-3 animate-spin" /> : isSuccess ? <Check className="w-3 h-3" /> : <><Bell className="w-3 h-3" /> Request</>}
                           </Button>
                         </div>
                       )}
                     </CardContent>
                   </Card>
-                ))
-              )}
+                );
+              })}
             </div>
           )}
 
-          {/* ================= EXCURSIONS VIEW ================= */}
+          {/* EXCURSIONS VIEW */}
           {currentView === "excursions" && (
             <div className="space-y-4">
-              {excursions.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">No excursions loaded yet.</div>
-              ) : (
-                excursions.map((exc) => (
+              {excursions.map((exc) => {
+                const uniqueId = `excursion-${exc.id}`;
+                const isSubmitting = submittingItemId === uniqueId;
+                const isSuccess = successItemId === uniqueId;
+
+                return (
                   <Card key={exc.id} className="overflow-hidden border-gray-100">
                     <CardContent className="p-4 flex flex-col justify-between space-y-3">
                       <div>
@@ -402,52 +414,41 @@ export default function GuestPortal() {
                       </div>
 
                       <div className="flex justify-between items-center pt-2 border-t border-dashed">
-                        {exc.duration ? (
-                          <Badge variant="outline" className="text-xs text-gray-500">
-                            {exc.duration}
-                          </Badge>
-                        ) : <div />}
+                        {exc.duration ? <Badge variant="outline" className="text-xs text-gray-500">{exc.duration}</Badge> : <div />}
 
                         {sessionStatus === "active" && (
-                          <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white h-8 text-xs">
-                            Book Tour
+                          <Button 
+                            size="sm" 
+                            className={`h-8 text-xs ${isSuccess ? "bg-emerald-500" : "bg-indigo-600 hover:bg-indigo-700"} text-white`}
+                            disabled={isSubmitting || isSuccess}
+                            onClick={() => submitRequest("excursion", exc.id, 1)}
+                          >
+                            {isSubmitting ? <Loader2 className="w-3 h-3 animate-spin" /> : isSuccess ? <Check className="w-3 h-3" /> : "Book Tour"}
                           </Button>
                         )}
                       </div>
                     </CardContent>
                   </Card>
-                ))
-              )}
+                );
+              })}
             </div>
           )}
 
-          {/* Support / Help Section (Always visible) */}
           <div className="pt-4 border-t space-y-3">
             <div className="text-center">
               <h4 className="text-sm font-semibold text-gray-800">Need immediate help?</h4>
               <p className="text-xs text-gray-500 mt-1">Our staff is available 24/7. Connect on WhatsApp instantly.</p>
             </div>
             
-            <a 
-              href={`https://wa.me/${riad.whatsappNumber}?text=Hello,%20I'm%20staying%20in%20room%20${encodeURIComponent(roomNumber)}.`} 
-              target="_blank" 
-              rel="noreferrer"
-              className="block w-full"
-            >
+            <a href={`https://wa.me/${riad.whatsappNumber}?text=Hello,%20I'm%20staying%20in%20room%20${encodeURIComponent(roomNumber)}.`} target="_blank" rel="noreferrer" className="block w-full">
               <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white flex gap-2 justify-center items-center py-6 text-base rounded-xl font-bold shadow-md shadow-emerald-600/10">
-                <Phone className="w-5 h-5" />
-                Contact Reception
+                <Phone className="w-5 h-5" /> Contact Reception
               </Button>
             </a>
           </div>
 
         </div>
-
-        {/* Footer info */}
-        <div className="p-4 text-center border-t text-xs text-gray-400 font-medium">
-          Powered by RiadKit
-        </div>
-
+        <div className="p-4 text-center border-t text-xs text-gray-400 font-medium">Powered by RiadKit</div>
       </div>
     </div>
   );
