@@ -119,19 +119,19 @@ export default function SettingsPage() {
       {/* 4. DANGER ZONE */}
       <div className="space-y-4">
         <h3 className="text-sm font-black uppercase tracking-[0.2em] text-destructive px-1">Danger Zone</h3>
-        <Card className="border-destructive/20 bg-destructive/[0.02] shadow-none">
+        <Card className="border-destructive/20 bg-destructive/2 shadow-none">
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="space-y-1">
                 <h4 className="text-sm font-black text-foreground">Delete this Riad</h4>
-                <p className="text-xs text-muted-foreground font-medium max-w-[400px]">
+                <p className="text-xs text-muted-foreground font-medium max-w-100">
                   Permanently remove all data, rooms, menu items, and order history. This action cannot be undone.
                 </p>
               </div>
               <Button variant="destructive" className="font-black uppercase text-xs h-11 px-8">
                 <Trash2 className="w-4 h-4 mr-2" /> Delete Riad
               </Button>
-            </div>
+            </div>;
           </CardContent>
         </Card>
       </div>
