@@ -267,7 +267,7 @@ export default function RoomsManagement() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground bg-muted/30 px-2 py-1 rounded-md border border-border/50 w-fit">
-                      {room.qr_token.substring(0, 12)}...
+                      {room.qr_token}
                       <button 
                         onClick={() => copyToClipboard(room.qr_token)}
                         className="hover:text-primary transition-colors"
