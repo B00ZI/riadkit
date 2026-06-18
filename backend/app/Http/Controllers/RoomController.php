@@ -21,7 +21,7 @@ class RoomController extends Controller
                 'room_number' => $room->room_number,
                 'type' => $room->type,
                 'qr_token' => $room->qr_token,
-                'status' => $room->status, // Vacant or Occupied
+                'status' => $room->status, // vacant or occupied
                 'is_active' => $room->session_status === 'active', // Derived directly from the enum
             ];
         });
@@ -44,7 +44,7 @@ class RoomController extends Controller
             'room_number' => $validated['room_number'],
             'type' => $validated['type'],
             'qr_token' => Str::random(16), // Generate secure token
-            'status' => 'Vacant', // Default physical status
+            'status' => 'vacant', // Default physical status
             'session_status' => 'expired', // Default guest session status
             'current_session_id' => null,
         ]);

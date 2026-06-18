@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('room_number');
             $table->string('type'); 
             $table->string('qr_token'); 
-            $table->string('status')->default('available');
+            $table->string('status')->default('vacant'); // 'vacant' or 'occupied'
 
             // For guest session management
             $table->string('current_session_id')->nullable();

@@ -16,7 +16,7 @@ class ReceptionController extends Controller
         }
 
         $room->update([
-            'status' => 'Occupied',
+            'status' => 'occupied',
             'current_session_id' => Str::random(16), 
             'session_status' => 'active',
         ]);
@@ -38,7 +38,7 @@ class ReceptionController extends Controller
         }
 
         $room->update([
-            'status' => 'Vacant',
+            'status' => 'vacant',
             'session_status' => 'expired', 
         ]);
 
