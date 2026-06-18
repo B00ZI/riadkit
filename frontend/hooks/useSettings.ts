@@ -14,8 +14,17 @@ export type Settings = {
   updated_at?: string;
 };
 
+const DEFAULT_SETTINGS: Settings = {
+  name: '',
+  description: '',
+  wifiName: '',
+  wifiPassword: '',
+  whatsappNumber: '',
+  instagramUrl: '',
+};
+
 export function useSettings() {
-  const [settings, setSettings] = useState<Settings | null>(null);
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,13 +33,17 @@ export function useSettings() {
     setIsLoading(true);
     setError(null);
     try {
-      // The API returns { riad: { ... } }
       const response = await fetchApi<{ riad: Settings }>('/api/settings');
-      // Extract the riad object
-      setSettings(response.riad);
+      // Merge with defaults to ensure all fields exist
+      const riad = response.riad;
+      setSettings({
+        ...DEFAULT_SETTINGS,
+        ...riad,
+      });
     } catch (error: any) {
       console.error('Failed to fetch settings:', error);
       setError(error.message || 'Failed to load settings');
+      // Keep default settings (no change)
     } finally {
       setIsLoading(false);
     }
@@ -40,13 +53,16 @@ export function useSettings() {
     setIsUpdating(true);
     setError(null);
     try {
-      // The update endpoint expects the fields directly, not nested under 'riad'
       const response = await fetchApi<{ message: string; riad: Settings }>('/api/settings', {
         method: 'PUT',
         body: JSON.stringify(data),
       });
-      // Update state with the returned riad
-      setSettings(response.riad);
+      // Merge with defaults
+      const riad = response.riad;
+      setSettings({
+        ...DEFAULT_SETTINGS,
+        ...riad,
+      });
       return response.riad;
     } catch (error: any) {
       setError(error.message || 'Failed to update settings');
@@ -61,7 +77,7 @@ export function useSettings() {
   }, [fetchSettings]);
 
   return {
-    settings,
+    settings,      // Now always a Settings object
     isLoading,
     isUpdating,
     error,

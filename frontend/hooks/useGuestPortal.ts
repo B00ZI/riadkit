@@ -6,18 +6,24 @@ import Cookies from 'js-cookie';
 import { fetchApi } from '@/lib/api';
 
 export type GuestPortalData = {
+    room_id?: number;
+    room_number?: string;
     riad: {
         name: string;
         description: string;
         wifiName: string;
         wifiPassword: string;
         whatsappNumber: string;
+        instagramUrl?: string;
+        logoUrl?: string;
+        currency?: string;
     };
-    room?: string;
-    menu_categories: any[];
+    menu: any[];
     services: any[];
     excursions: any[];
+    session_id?: string | null;          // ✅ Backend uses this
     session_status: 'active' | 'expired' | 'none';
+    // current_session_id is not used by backend, but kept for compatibility if needed
     current_session_id?: string;
 };
 
@@ -29,22 +35,21 @@ export function useGuestPortal(qrToken: string) {
     const bootstrapPortal = useCallback(async () => {
         setIsLoading(true);
         try {
-            // Fetch bootstrap data from Laravel
-            // fetchApi handles appending ?session_id=... automatically if cookie exists
             const res = await fetchApi<GuestPortalData>(`/api/guest/portal/${qrToken}`);
-            
             setData(res);
 
-            // �️ STICKY TOKEN LOGIC:
-            // Save the session_id from backend - NO EXPIRATION
-            // The backend controls session validity via session_status
-            if (res.current_session_id) {
-                Cookies.set('riadkit_session_id', res.current_session_id, { 
+            // ✅ Use 'session_id' from backend (not 'current_session_id')
+            const sessionId = res.session_id ?? res.current_session_id; // fallback
+            if (sessionId) {
+                Cookies.set('riadkit_session_id', sessionId, {
                     path: '/',
                     secure: process.env.NODE_ENV === 'production',
-                    sameSite: 'lax'
-                    // ✅ NO 'expires' - cookie is session-only (sticky)
+                    sameSite: 'lax',
+                    // ✅ No expiration – sticky token
                 });
+            } else {
+                // If no session_id, remove any stale cookie
+                Cookies.remove('riadkit_session_id', { path: '/' });
             }
 
             if (res.session_status === 'expired') {
@@ -52,23 +57,19 @@ export function useGuestPortal(qrToken: string) {
             } else if (res.session_status === 'active') {
                 setIsExpired(false);
             }
-
         } catch (error: any) {
             console.error('Failed to load guest portal:', error);
             if (error.status === 403) {
                 setIsExpired(true);
-                // ✅ Keep the cookie - it's the backend that says it's expired
-                // We keep it for Sticky Token Defense
+                // Keep the cookie – backend says it's expired, but we keep it for sticky token defense
             }
         } finally {
             setIsLoading(false);
         }
     }, [qrToken]);
 
-    // Listen for the custom event from lib/api.ts for mid-session expiration
     useEffect(() => {
         bootstrapPortal();
-
         const handleExpire = () => setIsExpired(true);
         window.addEventListener('guest-session-expired', handleExpire);
         return () => window.removeEventListener('guest-session-expired', handleExpire);

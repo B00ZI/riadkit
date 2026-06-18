@@ -1,24 +1,21 @@
-// app/dashboard/guest-portal/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { useSettings } from "@/hooks/useSettings";
 import { useCatalog } from "@/hooks/useCatalog";
-import type {
-  Category,
-  MenuItem,
-  Service,
-  Excursion
-} from "@/hooks/useCatalog";
+import type { Category, MenuItem, Service, Excursion } from "@/hooks/useCatalog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
+
+// Tab components
+import { SettingsTab } from "@/components/guest-portal/SettingsTab";
+import { MenuTab } from "@/components/guest-portal/MenuTab";
+import { ExcursionsTab } from "@/components/guest-portal/ExcursionsTab";
+import { ServicesTab } from "@/components/guest-portal/ServicesTab";
+import { PhonePreview } from "@/components/guest-portal/PhonePreview";
+
+// Dialogs
 import {
   Dialog,
   DialogContent,
@@ -37,6 +34,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Info,
   Plus,
@@ -46,7 +47,6 @@ import {
   GripVertical,
   Utensils,
   Sparkles,
-  Loader2,
   Save,
   MessageCircle,
   Pencil,
@@ -54,8 +54,8 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
-// ─── MAIN COMPONENT ──────────────────────────────────────────
 export default function GuestPortalManagement() {
+  // ─── Hooks ──────────────────────────────────────────────────
   const {
     settings,
     isLoading: settingsLoading,
@@ -82,8 +82,9 @@ export default function GuestPortalManagement() {
     deleteService,
   } = useCatalog();
 
-  // ─── STATE ──────────────────────────────────────────────────
+  // ─── State ──────────────────────────────────────────────────
   const [localSettings, setLocalSettings] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<string>("info"); // ✅ controlled tab
 
   // Dialog states
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
@@ -125,10 +126,9 @@ export default function GuestPortalManagement() {
     requires_quantity: false,
   });
 
-  // ─── EFFECTS ──────────────────────────────────────────────────
+  // ─── Effects ──────────────────────────────────────────────────
   useEffect(() => {
     if (settings) {
-      // Map backend fields to frontend expectations (fallback support)
       setLocalSettings({
         name: settings.name || "",
         description: settings.description || "",
@@ -140,9 +140,9 @@ export default function GuestPortalManagement() {
     }
   }, [settings]);
 
-  // ─── HANDLERS ─────────────────────────────────────────────────
+  // ─── Handlers ─────────────────────────────────────────────────
 
-  // ── Category ──
+  // Category
   const openCategoryDialog = () => {
     setIsEditMode(false);
     setCategoryForm({ id: null, name: "", type: "menu" });
@@ -156,7 +156,7 @@ export default function GuestPortalManagement() {
     setCategoryForm({ id: null, name: "", type: "menu" });
   };
 
-  // ── Menu Item ──
+  // Menu Item
   const openItemDialog = (item: MenuItem | null = null, categoryId: number = 0) => {
     if (item) {
       setIsEditMode(true);
@@ -197,7 +197,7 @@ export default function GuestPortalManagement() {
     setItemDialogOpen(false);
   };
 
-  // ── Excursion ──
+  // Excursion
   const openExcursionDialog = (excursion: Excursion | null = null) => {
     if (excursion) {
       setIsEditMode(true);
@@ -237,7 +237,7 @@ export default function GuestPortalManagement() {
     setExcursionDialogOpen(false);
   };
 
-  // ── Service ──
+  // Service
   const openServiceDialog = (service: Service | null = null) => {
     if (service) {
       setIsEditMode(true);
@@ -274,7 +274,7 @@ export default function GuestPortalManagement() {
     setServiceDialogOpen(false);
   };
 
-  // ── Delete ──
+  // Delete
   const confirmDelete = (type: string, id: number, name: string) => {
     setDeleteTarget({ type, id, name });
     setDeleteDialogOpen(true);
@@ -305,10 +305,9 @@ export default function GuestPortalManagement() {
     }
   };
 
-  // ── Settings ──
+  // Settings
   const handleSaveSettings = async () => {
     if (!localSettings) return;
-    // Map frontend field names back to backend expected names (if different)
     const payload = {
       name: localSettings.name,
       description: localSettings.description,
@@ -319,10 +318,7 @@ export default function GuestPortalManagement() {
     await updateSettings(payload);
   };
 
-  // ─── HELPERS ──────────────────────────────────────────────────
-  const menuCategories = categories.filter((c) => c.type === "menu");
-
-  // ─── LOADING / ERROR ─────────────────────────────────────────
+  // ─── Loading ──────────────────────────────────────────────────
   if (settingsLoading || catalogLoading) {
     return (
       <div className="h-96 flex flex-col items-center justify-center gap-4">
@@ -334,10 +330,9 @@ export default function GuestPortalManagement() {
     );
   }
 
-  // ─── RENDER ───────────────────────────────────────────────────
+  // ─── Render ──────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full space-y-6">
-      {/* Header - No Save button here anymore */}
       <div>
         <h1 className="text-2xl font-black tracking-tight uppercase">Guest Portal CMS</h1>
         <p className="text-muted-foreground text-sm font-medium">
@@ -348,445 +343,70 @@ export default function GuestPortalManagement() {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start pb-20">
         {/* ─── LEFT: EDITOR ───────────────────────────────────── */}
         <div className="xl:col-span-7">
-          <Tabs defaultValue="info" className="w-full">
+          {/* ✅ Controlled Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid grid-cols-4 w-full h-12 bg-muted/50 p-1 rounded-xl mb-6">
-              <TabsTrigger value="info" className="text-[10px] font-black uppercase">
-                <Info className="w-4 h-4 mr-1" /> Identity
+              <TabsTrigger value="info" className="text-[10px] font-black uppercase flex items-center gap-1.5">
+                <Info className="w-4 h-4" /> Identity
               </TabsTrigger>
-              <TabsTrigger value="menu" className="text-[10px] font-black uppercase">
-                <Utensils className="w-4 h-4 mr-1" /> Menu
+              <TabsTrigger value="menu" className="text-[10px] font-black uppercase flex items-center gap-1.5">
+                <Utensils className="w-4 h-4" /> Menu
               </TabsTrigger>
-              <TabsTrigger value="explore" className="text-[10px] font-black uppercase">
-                <Globe className="w-4 h-4 mr-1" /> Excursions
+              <TabsTrigger value="explore" className="text-[10px] font-black uppercase flex items-center gap-1.5">
+                <Globe className="w-4 h-4" /> Excursions
               </TabsTrigger>
-              <TabsTrigger value="services" className="text-[10px] font-black uppercase">
-                <Sparkles className="w-4 h-4 mr-1" /> Services
+              <TabsTrigger value="services" className="text-[10px] font-black uppercase flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4" /> Services
               </TabsTrigger>
             </TabsList>
 
-            {/* ─── TAB 1: IDENTITY ───────────────────────────── */}
             <TabsContent value="info" className="space-y-6 animate-in fade-in-50">
-              <Card className="p-6 border-border bg-card shadow-sm space-y-8">
-                <div className="space-y-4">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-primary flex items-center">
-                    <Globe className="w-4 h-4 mr-2" /> Riad Brand
-                  </h3>
-                  <div className="grid gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase opacity-60">
-                        Public Riad Name
-                      </Label>
-                      <Input
-                        value={localSettings?.name || ""}
-                        onChange={(e) =>
-                          setLocalSettings({ ...localSettings, name: e.target.value })
-                        }
-                        className="h-11 font-bold"
-                        placeholder="e.g. Riad Al Nour"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase opacity-60">
-                        Guest Welcome Message
-                      </Label>
-                      <Textarea
-                        value={localSettings?.description || ""}
-                        onChange={(e) =>
-                          setLocalSettings({ ...localSettings, description: e.target.value })
-                        }
-                        className="min-h-[100px]"
-                        placeholder="Welcome to our humble home..."
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-4">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-primary flex items-center">
-                    <Wifi className="w-4 h-4 mr-2" /> Connectivity & Support
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase opacity-60">
-                        WiFi Name
-                      </Label>
-                      <Input
-                        value={localSettings?.wifiName || ""}
-                        onChange={(e) =>
-                          setLocalSettings({ ...localSettings, wifiName: e.target.value })
-                        }
-                        className="font-bold"
-                        placeholder="Riad_Guest_WiFi"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase opacity-60">
-                        WiFi Password
-                      </Label>
-                      <Input
-                        value={localSettings?.wifiPassword || ""}
-                        onChange={(e) =>
-                          setLocalSettings({ ...localSettings, wifiPassword: e.target.value })
-                        }
-                        className="font-bold"
-                        placeholder="••••••••"
-                      />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label className="text-[10px] font-black uppercase opacity-60">
-                        Reception WhatsApp Number
-                      </Label>
-                      <div className="relative">
-                        <MessageCircle className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                        <Input
-                          value={localSettings?.whatsappNumber || ""}
-                          onChange={(e) =>
-                            setLocalSettings({ ...localSettings, whatsappNumber: e.target.value })
-                          }
-                          className="pl-10 font-bold"
-                          placeholder="+212 600 000 000"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* ─── SAVE BUTTON (ONLY HERE) ─────────────── */}
-                <Button
-                  onClick={handleSaveSettings}
-                  disabled={isUpdating}
-                  className="w-full h-12 font-black uppercase text-xs tracking-widest shadow-lg shadow-primary/20"
-                >
-                  {isUpdating ? (
-                    <><Loader2 className="animate-spin mr-2" /> Saving...</>
-                  ) : (
-                    <><Save className="w-4 h-4 mr-2" /> Save All Info</>
-                  )}
-                </Button>
-              </Card>
+              <SettingsTab
+                settings={localSettings}
+                initialSettings={settings}
+                onChange={setLocalSettings}
+                onSave={handleSaveSettings}
+                isSaving={isUpdating}
+              />
             </TabsContent>
 
-            {/* ─── TAB 2: MENU ────────────────────────────────── */}
             <TabsContent value="menu" className="space-y-4">
-              <div className="flex items-center justify-between px-1">
-                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-                  Menu Categories
-                </h3>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 text-[10px] font-black uppercase"
-                  onClick={openCategoryDialog}
-                >
-                  <Plus className="w-3 h-3 mr-1" /> New Category
-                </Button>
-              </div>
-
-              {menuCategories.length === 0 ? (
-                <Card className="p-8 border-border bg-card text-center text-muted-foreground">
-                  <p className="text-sm font-medium">No menu categories yet</p>
-                  <p className="text-xs">Add a category to get started</p>
-                </Card>
-              ) : (
-                menuCategories.map((cat) => (
-                  <Card key={cat.id} className="p-4 bg-card border-border shadow-sm">
-                    <div className="flex items-center justify-between mb-4 border-b pb-2">
-                      <div className="flex items-center gap-2">
-                        <GripVertical className="w-4 h-4 text-muted-foreground/30" />
-                        <span className="font-black text-sm uppercase">{cat.name}</span>
-                        <Badge variant="secondary" className="text-[9px] uppercase">
-                          {menuItems.filter((i) => i.category_id === cat.id).length} items
-                        </Badge>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => confirmDelete("category", cat.id, cat.name)}
-                        className="text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    <div className="space-y-2">
-                      {menuItems
-                        .filter((i) => i.category_id === cat.id)
-                        .map((item) => (
-                          <div
-                            key={item.id}
-                            className="flex items-center justify-between p-3 bg-muted/30 rounded-lg group border border-transparent hover:border-border transition-all"
-                          >
-                            <div className="flex flex-col">
-                              <span className="text-sm font-bold">{item.name}</span>
-                              <span className="text-xs text-muted-foreground font-black">
-                                {item.price} MAD
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => openItemDialog(item)}
-                                className="h-8 w-8 text-muted-foreground"
-                              >
-                                <Pencil className="w-3.5 h-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => confirmDelete("menuItem", item.id, item.name)}
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      <Button
-                        variant="outline"
-                        className="w-full h-10 border-dashed text-[10px] font-bold uppercase mt-2 opacity-60 hover:opacity-100"
-                        onClick={() => openItemDialog(null, cat.id)}
-                      >
-                        <Plus className="w-3 h-3 mr-1" /> Add to {cat.name}
-                      </Button>
-                    </div>
-                  </Card>
-                ))
-              )}
+              <MenuTab
+                categories={categories}
+                menuItems={menuItems}
+                onOpenCategoryDialog={openCategoryDialog}
+                onOpenItemDialog={openItemDialog}
+                onDeleteCategory={(id, name) => confirmDelete('category', id, name)}
+                onDeleteMenuItem={(id, name) => confirmDelete('menuItem', id, name)}
+              />
             </TabsContent>
 
-            {/* ─── TAB 3: EXCURSIONS ──────────────────────────── */}
             <TabsContent value="explore" className="space-y-4">
-              <div className="flex justify-between items-center px-1">
-                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-                  Tours & Experiences
-                </h3>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 text-[10px] font-black uppercase"
-                  onClick={() => openExcursionDialog()}
-                >
-                  <Plus className="w-3 h-3 mr-1" /> New Trip
-                </Button>
-              </div>
-
-              {excursions.length === 0 ? (
-                <Card className="p-8 border-border bg-card text-center text-muted-foreground">
-                  <p className="text-sm font-medium">No excursions yet</p>
-                  <p className="text-xs">Add an experience for your guests</p>
-                </Card>
-              ) : (
-                <div className="grid gap-3">
-                  {excursions.map((ex) => (
-                    <Card
-                      key={ex.id}
-                      className="p-4 bg-card border-border flex justify-between items-center group"
-                    >
-                      <div className="space-y-1">
-                        <p className="font-black text-sm uppercase">{ex.name}</p>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground font-bold">
-                          <span>{ex.price} MAD</span>
-                          <span className="w-px h-3 bg-muted-foreground/30" />
-                          <Clock className="w-3 h-3" />
-                          <span>{ex.duration}</span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openExcursionDialog(ex)}
-                          className="text-muted-foreground"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => confirmDelete("excursion", ex.id, ex.name)}
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
+              <ExcursionsTab
+                excursions={excursions}
+                onOpenDialog={openExcursionDialog}
+                onDelete={(id, name) => confirmDelete('excursion', id, name)}
+              />
             </TabsContent>
 
-            {/* ─── TAB 4: SERVICES ────────────────────────────── */}
             <TabsContent value="services" className="space-y-4">
-              <div className="flex justify-between items-center px-1">
-                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-                  Room Services
-                </h3>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 text-[10px] font-black uppercase"
-                  onClick={() => openServiceDialog()}
-                >
-                  <Plus className="w-3 h-3 mr-1" /> New Service
-                </Button>
-              </div>
-
-              {services.length === 0 ? (
-                <Card className="p-8 border-border bg-card text-center text-muted-foreground">
-                  <p className="text-sm font-medium">No services yet</p>
-                  <p className="text-xs">Add services for your guests</p>
-                </Card>
-              ) : (
-                <div className="grid gap-3">
-                  {services.map((svc) => (
-                    <Card
-                      key={svc.id}
-                      className="p-4 bg-card border-border flex justify-between items-center group"
-                    >
-                      <div className="space-y-1">
-                        <p className="font-black text-sm uppercase">{svc.name}</p>
-                        <p className="text-xs font-bold text-muted-foreground">
-                          {svc.price ? `${svc.price} MAD` : "Complimentary"}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <Badge variant="outline" className="text-[9px] uppercase">
-                          {svc.requires_quantity ? "Qty Required" : "Request Only"}
-                        </Badge>
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openServiceDialog(svc)}
-                            className="text-muted-foreground"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => confirmDelete("service", svc.id, svc.name)}
-                            className="text-muted-foreground hover:text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
+              <ServicesTab
+                services={services}
+                onOpenDialog={openServiceDialog}
+                onDelete={(id, name) => confirmDelete('service', id, name)}
+              />
             </TabsContent>
           </Tabs>
         </div>
 
         {/* ─── RIGHT: PREVIEW ────────────────────────────────── */}
-        <div className="xl:col-span-5 hidden xl:block sticky top-24">
-          <div className="flex flex-col items-center">
-            <div className="relative w-[310px] h-[630px] bg-zinc-950 rounded-[3rem] border-[8px] border-zinc-900 shadow-2xl overflow-hidden ring-1 ring-zinc-800">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-zinc-900 rounded-b-2xl z-20" />
-              <div className="w-full h-full bg-background overflow-hidden flex flex-col pt-8">
-                {/* Preview Header */}
-                <div className="px-6 py-4">
-                  <div className="w-7 h-7 rounded-lg bg-primary mb-3 shadow-lg shadow-primary/20 flex items-center justify-center">
-                    <Sparkles className="w-4 h-4 text-primary-foreground" />
-                  </div>
-                  <h4 className="font-black text-xl text-foreground leading-none">
-                    {localSettings?.name || "Your Riad"}
-                  </h4>
-                  <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1 tracking-tight">
-                    Marrakech, Morocco
-                  </p>
-                </div>
-
-                {/* Preview Content */}
-                <div className="px-6 flex-1 space-y-6 overflow-y-auto no-scrollbar">
-                  {/* WiFi Quick Access */}
-                  <div className="bg-muted/40 p-3.5 rounded-2xl border border-border/50">
-                    <div className="flex items-center gap-3">
-                      <Wifi className="w-4 h-4 text-primary" />
-                      <div className="flex flex-col">
-                        <span className="text-[8px] font-black uppercase text-muted-foreground leading-none mb-1">
-                          Guest WiFi
-                        </span>
-                        <span className="text-xs font-bold leading-none tracking-tight">
-                          {localSettings?.wifiName || "Riad_Guest_WiFi"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Menu Preview */}
-                  {menuItems.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-end">
-                        <span className="text-[10px] font-black uppercase tracking-widest">Menu</span>
-                      </div>
-                      <div className="space-y-2">
-                        {menuItems.slice(0, 3).map((item) => (
-                          <div
-                            key={item.id}
-                            className="bg-card border border-border p-3 rounded-xl shadow-sm flex items-center gap-3"
-                          >
-                            <div className="w-10 h-10 bg-muted rounded-lg shrink-0 flex items-center justify-center text-xs font-black uppercase">
-                              {item.name?.charAt(0)}
-                            </div>
-                            <div className="flex flex-col flex-1 min-w-0">
-                              <span className="text-[11px] font-bold truncate">{item.name}</span>
-                              <span className="text-[9px] text-muted-foreground font-medium">
-                                {item.price} MAD
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                        {menuItems.length > 3 && (
-                          <span className="text-[9px] text-muted-foreground font-bold block text-center">
-                            +{menuItems.length - 3} more items
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Excursions Preview */}
-                  {excursions.length > 0 && (
-                    <div className="space-y-3">
-                      <span className="text-[10px] font-black uppercase tracking-widest">
-                        Experiences
-                      </span>
-                      {excursions.slice(0, 1).map((ex) => (
-                        <div
-                          key={ex.id}
-                          className="bg-zinc-900 rounded-2xl aspect-[4/3] relative overflow-hidden flex flex-col justify-end p-4"
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80" />
-                          <span className="relative z-10 text-xs font-black text-white uppercase">
-                            {ex.name}
-                          </span>
-                          <span className="relative z-10 text-[9px] font-bold text-white/70">
-                            {ex.price} MAD • {ex.duration}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Bottom Nav Simulation */}
-                <div className="h-16 border-t border-border bg-card/80 backdrop-blur-md flex items-center justify-around px-4">
-                  <div className="w-8 h-1 rounded-full bg-primary" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
-                </div>
-              </div>
-            </div>
-            <p className="mt-4 text-[10px] font-bold uppercase text-muted-foreground tracking-widest opacity-60">
-              Mobile Preview
-            </p>
-          </div>
+        <div className="xl:col-span-5 hidden xl:block sticky top-24 self-start">
+          <PhonePreview
+            riadName={localSettings?.name}
+            wifiName={localSettings?.wifiName}
+            menuItems={menuItems}
+            excursions={excursions}
+          />
         </div>
       </div>
 
@@ -824,7 +444,7 @@ export default function GuestPortalManagement() {
                   className="flex-1 font-black uppercase text-xs"
                   onClick={() => setCategoryForm({ ...categoryForm, type: "menu" })}
                 >
-                  <Utensils className="w-4 h-4 mr-2" /> Menu
+                  Menu
                 </Button>
                 <Button
                   type="button"
@@ -832,7 +452,7 @@ export default function GuestPortalManagement() {
                   className="flex-1 font-black uppercase text-xs"
                   onClick={() => setCategoryForm({ ...categoryForm, type: "service" })}
                 >
-                  <Sparkles className="w-4 h-4 mr-2" /> Service
+                  Service
                 </Button>
               </div>
             </div>
