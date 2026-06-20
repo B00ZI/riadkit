@@ -16,7 +16,6 @@ class GuestRequestController extends Controller
     {
         $requests = $request->user()->riad->guestRequests()
             ->with(['room:id,room_number'])
-            ->whereIn('status', ['pending', 'in_progress'])
             ->orderBy('created_at', 'asc')
             ->get();
 

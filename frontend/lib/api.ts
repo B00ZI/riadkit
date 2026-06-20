@@ -82,7 +82,7 @@ export async function fetchApi<T = any>(endpoint: string, options: RequestInit =
         }
 
         if (!response.ok) {
-            console.error(`Fetch error [${endpoint}]:`, response.status, data);
+        console.error(`Fetch error [${endpoint}]:`, response.status, data);
 
             // Handle Staff Token Expired (401)
             if (response.status === 401) {
