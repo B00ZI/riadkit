@@ -120,7 +120,7 @@ export default function GuestPortalPage() {
 
   if (isLoading) {
     return (
-      <div className="h-[100dvh] flex flex-col items-center justify-center gap-4 bg-background">
+      <div className="h-dvh flex flex-col items-center justify-center gap-4 bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
         <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
           Bootstrapping Portal...
@@ -141,7 +141,7 @@ export default function GuestPortalPage() {
   // ─── RENDER ────────────────────────────────────────────────
 
   return (
-    <div className="relative flex flex-col w-full h-[100dvh] max-w-md mx-auto bg-background text-foreground overflow-hidden sm:border-x sm:border-border/50 shadow-2xl">
+    <div className="relative flex flex-col w-full h-dvh max-w-md mx-auto bg-background text-foreground overflow-hidden sm:border-x sm:border-border/50 shadow-2xl">
       {/* HEADER */}
       <header className="px-6 pt-8 pb-4 flex justify-between items-start shrink-0 w-full bg-background z-10">
         <div className="space-y-1">
@@ -425,7 +425,7 @@ export default function GuestPortalPage() {
       </main>
 
       {/* NAVIGATION */}
-      <nav className="absolute bottom-0 w-full h-[84px] bg-card/90 backdrop-blur-xl border-t border-border flex items-center justify-around px-6 z-50">
+      <nav className="absolute bottom-0 w-full h-21 bg-card/90 backdrop-blur-xl border-t border-border flex items-center justify-around px-6 z-50">
         {[
           { id: "home", icon: HomeIcon, label: "Home" },
           { id: "menu", icon: Utensils, label: "Menu" },

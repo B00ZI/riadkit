@@ -156,7 +156,7 @@ export function StockTab() {
               {outOfStockItems.map((item) => (
                 <Card
                   key={item.id}
-                  className="bg-destructive/[0.03] border-destructive/20 shadow-none"
+                  className="bg-destructive/3 border-destructive/20 shadow-none"
                 >
                   <div className="p-3 flex items-center justify-between">
                     <div className="flex flex-col">

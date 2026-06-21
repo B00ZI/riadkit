@@ -19,7 +19,7 @@ export function PhonePreview({
 }: PhonePreviewProps) {
   return (
     <div className="flex flex-col items-center">
-      <div className="relative w-[310px] h-[630px] bg-zinc-950 rounded-[3rem] border-[8px] border-zinc-900 shadow-2xl overflow-hidden ring-1 ring-zinc-800">
+      <div className="relative w-77.5 h-157.5 bg-zinc-950 rounded-[3rem] boborder-8order-zinc-900 shadow-2xl overflow-hidden ring-1 ring-zinc-800">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-zinc-900 rounded-b-2xl z-20" />
         <div className="w-full h-full bg-background overflow-hidden flex flex-col pt-8">
           {/* Preview Header */}
@@ -93,9 +93,9 @@ export function PhonePreview({
                 {excursions.slice(0, 1).map((ex) => (
                   <div
                     key={ex.id}
-                    className="bg-zinc-900 rounded-2xl aspect-[4/3] relative overflow-hidden flex flex-col justify-end p-4"
+                    className="bg-zinc-900 rounded-2xl aspect-4/3 relative overflow-hidden flex flex-col justify-end p-4"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-80" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black to-transparent opacity-80" />
                     <span className="relative z-10 text-xs font-black text-white uppercase">
                       {ex.name}
                     </span>

@@ -414,7 +414,7 @@ export default function GuestPortalManagement() {
 
       {/* Category Dialog */}
       <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-106.25">
           <DialogHeader>
             <DialogTitle className="font-black uppercase tracking-tight">New Category</DialogTitle>
             <DialogDescription>
@@ -471,7 +471,7 @@ export default function GuestPortalManagement() {
 
       {/* Menu Item Dialog */}
       <Dialog open={itemDialogOpen} onOpenChange={setItemDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-106.25">
           <DialogHeader>
             <DialogTitle className="font-black uppercase tracking-tight">
               {isEditMode ? "Edit" : "New"} Menu Item
@@ -515,7 +515,7 @@ export default function GuestPortalManagement() {
                 value={itemForm.description}
                 onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })}
                 placeholder="Traditional Moroccan tea with fresh mint"
-                className="min-h-[80px]"
+                className="min-h-20"
               />
             </div>
           </div>
@@ -533,7 +533,7 @@ export default function GuestPortalManagement() {
 
       {/* Excursion Dialog */}
       <Dialog open={excursionDialogOpen} onOpenChange={setExcursionDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-106.25">
           <DialogHeader>
             <DialogTitle className="font-black uppercase tracking-tight">
               {isEditMode ? "Edit" : "New"} Excursion
@@ -590,7 +590,7 @@ export default function GuestPortalManagement() {
                 value={excursionForm.description}
                 onChange={(e) => setExcursionForm({ ...excursionForm, description: e.target.value })}
                 placeholder="Evening camel ride followed by traditional dinner..."
-                className="min-h-[80px]"
+                className="min-h-20"
               />
             </div>
           </div>
@@ -608,7 +608,7 @@ export default function GuestPortalManagement() {
 
       {/* Service Dialog */}
       <Dialog open={serviceDialogOpen} onOpenChange={setServiceDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-106.25">
           <DialogHeader>
             <DialogTitle className="font-black uppercase tracking-tight">
               {isEditMode ? "Edit" : "New"} Service

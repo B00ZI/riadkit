@@ -140,7 +140,7 @@ export default function OwnerDashboard() {
             <CardTitle className="text-lg font-bold">Revenue Overview</CardTitle>
             <CardDescription>Monthly revenue trends</CardDescription>
           </CardHeader>
-          <CardContent className="h-[300px] pl-2">
+          <CardContent className="h-75 pl-2">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
@@ -178,7 +178,7 @@ export default function OwnerDashboard() {
           </CardHeader>
           <CardContent className="space-y-4">
             {pendingOrders > 0 ? (
-              <div className="flex items-center justify-between p-3 rounded-lg border border-destructive/20 bg-destructive/[0.02]">
+              <div className="flex items-center justify-between p-3 rounded-lg border border-destructive/20 bg-destructive/2">
                 <div className="flex flex-col">
                   <span className="font-bold text-sm text-foreground">
                     {pendingOrders} Pending Orders

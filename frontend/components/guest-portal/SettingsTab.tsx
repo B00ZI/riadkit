@@ -70,7 +70,7 @@ export function SettingsTab({
               <Textarea
                 value={settings.description ?? ""}
                 onChange={(e) => onChange({ ...settings, description: e.target.value })}
-                className="min-h-[100px]"
+                className="min-h-25"
                 placeholder="Welcome to our humble home..."
               />
             </div>

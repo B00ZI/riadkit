@@ -149,7 +149,7 @@ export default function RoomsManagement() {
                 <Plus className="w-4 h-4 mr-2" /> Add Room
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-106.25">
               <DialogHeader>
                 <DialogTitle className="font-black uppercase tracking-tight">
                   Create Room
@@ -314,7 +314,7 @@ export default function RoomsManagement() {
           setQrImage(null);
         }
       }}>
-        <DialogContent className="bg-white sm:max-w-[380px] p-6 overflow-hidden border-none shadow-2xl">
+        <DialogContent className="bg-white sm:max-w-95 p-6 overflow-hidden border-none shadow-2xl">
           <DialogHeader>
             <DialogTitle className="font-black uppercase tracking-tight text-center">
               QR Code
