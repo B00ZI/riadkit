@@ -36,11 +36,20 @@ Route::middleware(['auth:sanctum', 'role:owner'])->group(function () {
     Route::apiResource('menu-items', MenuItemController::class);
     Route::apiResource('services', ServiceController::class);
     Route::apiResource('excursions', ExcursionController::class);
+
+    Route::prefix('staff')->group(function () {
+        Route::get('/', [StaffController::class, 'index']);
+        Route::post('/', [StaffController::class, 'store']);
+        Route::put('/{id}', [StaffController::class, 'update']);
+        Route::delete('/{id}', [StaffController::class, 'destroy']);
+    });
 });
 
 // Routes accessible by both owner and receptionist
 Route::middleware(['auth:sanctum', 'role:owner, receptionist'])->group(function () {
-    Route::get('/user', function (Request $request) { return $request->user(); });
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
     Route::get('/settings', [RiadController::class, 'show']); // view settings
 
     Route::get('/rooms', [RoomController::class, 'index']); // both can view rooms
