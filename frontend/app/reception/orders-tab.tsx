@@ -11,7 +11,12 @@ import { useRequests } from "@/hooks/useRequests";
 type FilterStatus = "pending" | "in_progress" | "completed";
 
 export function OrdersTab() {
-  const { requests, isLoading, error, updateStatus } = useRequests();
+  // ✅ Fetch only active orders + today's completed
+  const { requests, isLoading, error, updateStatus } = useRequests({
+    status: 'pending,in_progress,completed',
+    days: 1, // only completed from the last 24 hours
+  });
+
   const [filter, setFilter] = useState<FilterStatus>("pending");
 
   // Filter orders based on selected status

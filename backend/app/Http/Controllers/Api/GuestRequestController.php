@@ -14,11 +14,41 @@ class GuestRequestController extends Controller
 {
     public function index(Request $request)
     {
-        $requests = $request->user()->riad->guestRequests()
-            ->with(['room:id,room_number'])
-            ->orderBy('created_at', 'asc')
-            ->get();
+        $query = $request->user()->riad->guestRequests()
+            ->with(['room:id,room_number']);
 
+        // ─── 1. STATUS FILTER ──────────────────────────────────
+        if ($request->has('status') && $request->status !== 'all') {
+            $statuses = explode(',', $request->status);
+            $query->whereIn('status', $statuses);
+        }
+        // If no status param OR status=all → return all
+
+        // ─── 2. DAYS FILTER (only for completed) ──────────────
+        if ($request->has('days') && is_numeric($request->days)) {
+            $days = (int) $request->days;
+            $query->where(function ($q) use ($days) {
+                $q->where('status', '!=', 'completed')
+                    ->orWhereDate('created_at', '>=', now()->subDays($days));
+            });
+        }
+
+        // ─── 3. DATE RANGE FILTERS ────────────────────────────
+        if ($request->has('from')) {
+            $query->whereDate('created_at', '>=', $request->from);
+        }
+
+        if ($request->has('to')) {
+            $query->whereDate('created_at', '<=', $request->to);
+        }
+
+        // ─── 4. SORTING ────────────────────────────────────────
+        $sort = $request->get('sort', 'desc');
+        $query->orderBy('created_at', $sort === 'asc' ? 'asc' : 'desc');
+
+        $requests = $query->get();
+
+        // ─── 5. MAP TO FRONTEND FORMAT ────────────────────────
         $mappedRequests = $requests->map(function ($req) {
             $itemName = 'Unknown Item';
             $itemPrice = 0;
@@ -28,24 +58,18 @@ class GuestRequestController extends Controller
                 if ($item) {
                     $itemName = $item->name;
                     $itemPrice = (float) $item->price;
-                } else {
-                    $itemName = 'Deleted Item';
                 }
             } elseif ($req->type === 'service') {
                 $item = Service::find($req->item_id);
                 if ($item) {
                     $itemName = $item->name;
                     $itemPrice = (float) ($item->price ?? 0);
-                } else {
-                    $itemName = 'Deleted Service';
                 }
             } elseif ($req->type === 'excursion') {
                 $item = Excursion::find($req->item_id);
                 if ($item) {
                     $itemName = $item->name;
                     $itemPrice = (float) $item->price;
-                } else {
-                    $itemName = 'Deleted Excursion';
                 }
             }
 
@@ -57,10 +81,11 @@ class GuestRequestController extends Controller
                 'type' => $req->type,
                 'item_name' => $itemName,
                 'quantity' => $req->quantity,
-                'total_price' => number_format($totalPrice, 2, '.', ''), // e.g., "150.00"
+                'total_price' => number_format($totalPrice, 2, '.', ''),
                 'notes' => $req->notes,
                 'status' => $req->status,
                 'created_at' => $req->created_at->diffForHumans(),
+                'created_at_raw' => $req->created_at->toISOString(), // for frontend date filtering
             ];
         });
 
