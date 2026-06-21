@@ -30,7 +30,7 @@ class MenuItemController extends Controller
 
         // Validate that the chosen category belongs to the same Riad
         $category = $request->user()->riad->categories()->find($validated['category_id']);
-        if (!$category) {
+        if (! $category) {
             return response()->json(['message' => 'Invalid category selected'], 422);
         }
 
@@ -42,6 +42,14 @@ class MenuItemController extends Controller
 
     public function update(Request $request, MenuItem $menuItem)
     {
+
+        \Log::debug('Menu item update check', [
+            'auth_user_id' => $request->user()->id,
+            'auth_user_riad' => $request->user()->riad_id,
+            'menu_item_id' => $menuItem->id,
+            'menu_item_riad' => $menuItem->riad_id,
+            'compare' => $menuItem->riad_id !== $request->user()->riad_id,
+        ]);
         if ($menuItem->riad_id !== $request->user()->riad_id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -57,7 +65,7 @@ class MenuItemController extends Controller
 
         if (isset($validated['category_id'])) {
             $category = $request->user()->riad->categories()->find($validated['category_id']);
-            if (!$category) {
+            if (! $category) {
                 return response()->json(['message' => 'Invalid category selected'], 422);
             }
         }

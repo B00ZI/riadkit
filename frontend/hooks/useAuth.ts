@@ -93,11 +93,11 @@ export function useAuth() {
 
             // ✅ Small delay to ensure cookie is saved
             setTimeout(() => {
-                if (res.user.role === 'receptionist') {
-                    console.log('5️⃣ Redirecting to /dashboard');
+                if (res.user.role === 'owner') {
+                    console.log('Redirecting to /dashboard');
                     router.push('/dashboard');
                 } else {
-                    console.log('5️⃣ Redirecting to /dashboard/reception');
+                    console.log('Redirecting to /dashboard/reception');
                     router.push('/reception');
                 }
             }, 100);
