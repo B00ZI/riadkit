@@ -38,6 +38,7 @@ import {
   X,
 } from "lucide-react";
 import { useRequests } from "@/hooks/useRequests";
+import { useRooms } from "@/hooks/useRooms";
 
 // ─── Helpers ──────────────────────────────────────────────────
 const statusMap: Record<string, string> = {
@@ -77,7 +78,7 @@ export default function OrderHistory() {
   const { requests, isLoading, error, refresh } = useRequests({
     status: "all",
   });
-
+  const { rooms } = useRooms(); // only take rooms, ignore loading/error if you want
   // ─── State ──────────────────────────────────────────────────
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
@@ -94,9 +95,8 @@ export default function OrderHistory() {
 
   // ─── Unique room numbers from data ─────────────────────────
   const roomOptions = useMemo(() => {
-    const rooms = Array.from(new Set(requests.map((r) => r.room_number))).sort();
-    return rooms;
-  }, [requests]);
+    return rooms.map((room) => room.room_number).sort();
+  }, [rooms]);
 
   // ─── Filtered Data ─────────────────────────────────────────
   const filteredRequests = useMemo(() => {
