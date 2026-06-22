@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/breadcrumb";
 // 1. Import TooltipProvider
 import { TooltipProvider } from "@/components/ui/tooltip";
-
+import { RoleGuard } from '@/components/RoleGuard';
 export default function DashboardLayout({
   children,
 }: {
@@ -23,6 +23,7 @@ export default function DashboardLayout({
 }) {
   return (
     // 2. Wrap everything inside TooltipProvider
+     <RoleGuard allowedRoles={['owner']}> 
     <TooltipProvider>
       <SidebarProvider>
         <div className="flex min-h-screen w-full bg-background">
@@ -55,5 +56,6 @@ export default function DashboardLayout({
         </div>
       </SidebarProvider>
     </TooltipProvider>
+    </RoleGuard>
   );
 }

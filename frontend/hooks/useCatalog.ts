@@ -129,8 +129,10 @@ export function useCatalog() {
         fetchData();
     }, [fetchData]);
 
-    // ─── Category CRUD ──────────────────────────────────────────
+    // ─── Helper: refresh ──────────────────────────────────────
+    const refresh = fetchData;
 
+    // ─── Category CRUD ──────────────────────────────────────────
     const addCategory = async (name: string, type: 'menu' | 'service') => {
         setIsSubmitting(true);
         setError(null);
@@ -144,7 +146,7 @@ export function useCatalog() {
                 method: 'POST',
                 body: JSON.stringify(payload),
             });
-            await fetchData();
+            await refresh();
         } catch (error: any) {
             setError(error.message || 'Failed to add category');
             throw error;
@@ -161,7 +163,7 @@ export function useCatalog() {
                 method: 'PUT',
                 body: JSON.stringify(data),
             });
-            await fetchData();
+            await refresh();
         } catch (error: any) {
             setError(error.message || 'Failed to update category');
             throw error;
@@ -177,7 +179,7 @@ export function useCatalog() {
             await fetchApi(`/api/categories/${id}`, {
                 method: 'DELETE',
             });
-            await fetchData();
+            await refresh();
         } catch (error: any) {
             setError(error.message || 'Failed to delete category');
             throw error;
@@ -187,7 +189,6 @@ export function useCatalog() {
     };
 
     // ─── Menu Item CRUD ─────────────────────────────────────────
-
     const addMenuItem = async (data: CreateMenuItemPayload) => {
         setIsSubmitting(true);
         setError(null);
@@ -199,7 +200,7 @@ export function useCatalog() {
                     is_available: data.is_available ?? true,
                 }),
             });
-            await fetchData();
+            await refresh();
         } catch (error: any) {
             setError(error.message || 'Failed to add menu item');
             throw error;
@@ -216,7 +217,7 @@ export function useCatalog() {
                 method: 'PUT',
                 body: JSON.stringify(data),
             });
-            await fetchData();
+            await refresh();
         } catch (error: any) {
             setError(error.message || 'Failed to update menu item');
             throw error;
@@ -232,7 +233,7 @@ export function useCatalog() {
             await fetchApi(`/api/menu-items/${id}`, {
                 method: 'DELETE',
             });
-            await fetchData();
+            await refresh();
         } catch (error: any) {
             setError(error.message || 'Failed to delete menu item');
             throw error;
@@ -249,7 +250,7 @@ export function useCatalog() {
                 method: 'PUT',
                 body: JSON.stringify({ is_available: isAvailable }),
             });
-            await fetchData();
+            await refresh();
         } catch (error: any) {
             setError(error.message || 'Failed to update availability');
             throw error;
@@ -259,7 +260,6 @@ export function useCatalog() {
     };
 
     // ─── Service CRUD ───────────────────────────────────────────
-
     const addService = async (data: CreateServicePayload) => {
         setIsSubmitting(true);
         setError(null);
@@ -271,7 +271,7 @@ export function useCatalog() {
                     requires_quantity: data.requires_quantity ?? false,
                 }),
             });
-            await fetchData();
+            await refresh();
         } catch (error: any) {
             setError(error.message || 'Failed to add service');
             throw error;
@@ -288,7 +288,7 @@ export function useCatalog() {
                 method: 'PUT',
                 body: JSON.stringify(data),
             });
-            await fetchData();
+            await refresh();
         } catch (error: any) {
             setError(error.message || 'Failed to update service');
             throw error;
@@ -304,7 +304,7 @@ export function useCatalog() {
             await fetchApi(`/api/services/${id}`, {
                 method: 'DELETE',
             });
-            await fetchData();
+            await refresh();
         } catch (error: any) {
             setError(error.message || 'Failed to delete service');
             throw error;
@@ -313,8 +313,25 @@ export function useCatalog() {
         }
     };
 
-    // ─── Excursion CRUD ─────────────────────────────────────────
+    // ✅ Toggle service availability (receptionist use)
+    const toggleServiceAvailability = async (id: number, isAvailable: boolean) => {
+        setIsSubmitting(true);
+        setError(null);
+        try {
+            await fetchApi<Service>(`/api/services/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ is_available: isAvailable }),
+            });
+            await refresh();
+        } catch (error: any) {
+            setError(error.message || 'Failed to update service availability');
+            throw error;
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
+    // ─── Excursion CRUD ─────────────────────────────────────────
     const addExcursion = async (data: CreateExcursionPayload) => {
         setIsSubmitting(true);
         setError(null);
@@ -323,7 +340,7 @@ export function useCatalog() {
                 method: 'POST',
                 body: JSON.stringify(data),
             });
-            await fetchData();
+            await refresh();
         } catch (error: any) {
             setError(error.message || 'Failed to add excursion');
             throw error;
@@ -340,7 +357,7 @@ export function useCatalog() {
                 method: 'PUT',
                 body: JSON.stringify(data),
             });
-            await fetchData();
+            await refresh();
         } catch (error: any) {
             setError(error.message || 'Failed to update excursion');
             throw error;
@@ -356,7 +373,7 @@ export function useCatalog() {
             await fetchApi(`/api/excursions/${id}`, {
                 method: 'DELETE',
             });
-            await fetchData();
+            await refresh();
         } catch (error: any) {
             setError(error.message || 'Failed to delete excursion');
             throw error;
@@ -365,8 +382,25 @@ export function useCatalog() {
         }
     };
 
-    // ─── Return ──────────────────────────────────────────────────
+    // ✅ Toggle excursion availability (receptionist use)
+    const toggleExcursionAvailability = async (id: number, isAvailable: boolean) => {
+        setIsSubmitting(true);
+        setError(null);
+        try {
+            await fetchApi<Excursion>(`/api/excursions/${id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ is_available: isAvailable }),
+            });
+            await refresh();
+        } catch (error: any) {
+            setError(error.message || 'Failed to update excursion availability');
+            throw error;
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
+    // ─── Return ──────────────────────────────────────────────────
     return {
         // Data
         categories,
@@ -392,13 +426,15 @@ export function useCatalog() {
         addService,
         updateService,
         deleteService,
+        toggleServiceAvailability, // ✅ exported
 
         // Excursions
         addExcursion,
         updateExcursion,
         deleteExcursion,
+        toggleExcursionAvailability, // ✅ exported
 
         // Utilities
-        refresh: fetchData,
+        refresh,
     };
 }

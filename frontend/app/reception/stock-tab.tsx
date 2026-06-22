@@ -5,45 +5,59 @@ import { useState, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { LayoutGrid, Utensils, Sparkles, Map, AlertTriangle, Loader2 } from "lucide-react";
+import { Utensils, Sparkles, Map, AlertTriangle, Loader2 } from "lucide-react";
 import { useCatalog } from "@/hooks/useCatalog";
 
 type DomainFilter = "menu" | "services" | "explore";
 
 export function StockTab() {
   const {
+    categories,
     menuItems,
     services,
     excursions,
     isLoading,
     error,
     toggleMenuItemAvailability,
+    toggleServiceAvailability,
+    toggleExcursionAvailability,
   } = useCatalog();
 
   const [mainFilter, setMainFilter] = useState<DomainFilter>("menu");
   const [subFilter, setSubFilter] = useState<string>("all");
 
-  // ─── Combine all items into a single list with category metadata ──
+  // ─── Category lookup map ──────────────────────────────────
+  const categoryMap = useMemo(() => {
+    const map: Record<number, string> = {};
+    categories.forEach((cat) => {
+      map[cat.id] = cat.name;
+    });
+    return map;
+  }, [categories]);
+
+  // ─── All items with proper sub‑category names ─────────────
   const allItems = useMemo(() => {
     const items: any[] = [];
 
     menuItems.forEach((item) => {
+      const categoryName = categoryMap[item.category_id] || "Uncategorized";
       items.push({
         id: item.id,
         name: item.name,
         category: "menu",
-        sub: "Menu Items", // or you can use category name if available
+        sub: categoryName,
         inStock: item.is_available,
         original: item,
       });
     });
 
     services.forEach((item) => {
+      const categoryName = item.category_id ? categoryMap[item.category_id] : "Services";
       items.push({
         id: item.id,
         name: item.name,
         category: "services",
-        sub: "Services",
+        sub: categoryName || "Services",
         inStock: item.is_available,
         original: item,
       });
@@ -61,7 +75,7 @@ export function StockTab() {
     });
 
     return items;
-  }, [menuItems, services, excursions]);
+  }, [menuItems, services, excursions, categoryMap]);
 
   // ─── Filter by main domain ──────────────────────────────────
   const domainItems = useMemo(
@@ -69,26 +83,35 @@ export function StockTab() {
     [allItems, mainFilter]
   );
 
-  // ─── Get unique sub-categories for the sub-filter bar ──────
+  // ─── Sub‑categories (only meaningful for menu) ─────────────
   const subCategories = useMemo(() => {
+    if (mainFilter !== "menu") return [];
     const subs = Array.from(new Set(domainItems.map((item) => item.sub)));
     return ["all", ...subs];
-  }, [domainItems]);
+  }, [domainItems, mainFilter]);
 
-  // ─── Separate Out of Stock ──────────────────────────────────
+  // ─── Out of Stock ──────────────────────────────────────────
   const outOfStockItems = domainItems.filter((item) => !item.inStock);
 
-  // ─── Filter Available items by Sub-Category ─────────────────
-  const availableItems = domainItems.filter(
-    (item) => item.inStock && (subFilter === "all" || item.sub === subFilter)
-  );
+  // ─── Available items (subFilter only for menu) ─────────────
+  const availableItems = useMemo(() => {
+    if (mainFilter !== "menu") {
+      return domainItems.filter((item) => item.inStock);
+    }
+    return domainItems.filter(
+      (item) => item.inStock && (subFilter === "all" || item.sub === subFilter)
+    );
+  }, [domainItems, mainFilter, subFilter]);
 
   // ─── Toggle Handler ──────────────────────────────────────────
   const handleToggle = (item: any) => {
     if (item.category === "menu") {
       toggleMenuItemAvailability(item.id, !item.inStock);
+    } else if (item.category === "services") {
+      toggleServiceAvailability(item.id, !item.inStock);
+    } else if (item.category === "explore") {
+      toggleExcursionAvailability(item.id, !item.inStock);
     }
-    // For services/excursions – add similar functions if needed
   };
 
   // ─── Loading / Error ────────────────────────────────────────
@@ -146,7 +169,7 @@ export function StockTab() {
       </div>
 
       <div className="flex-col space-y-6">
-        {/* SECTION: ACTION REQUIRED (Out of Stock) */}
+        {/* SECTION: Out of Stock */}
         {outOfStockItems.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-destructive flex items-center px-1">
@@ -177,29 +200,31 @@ export function StockTab() {
           </div>
         )}
 
-        {/* SECTION: AVAILABLE (With Sub-Filtering) */}
+        {/* SECTION: Available Items */}
         <div className="space-y-3">
           <div className="flex flex-col space-y-3 px-1">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
               Available Items
             </h3>
 
-            {/* SUB-CATEGORY FILTER PILLS */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-              {subCategories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSubFilter(cat)}
-                  className={`px-3 py-1 rounded-md text-[10px] font-black uppercase transition-all border ${
-                    subFilter === cat
-                      ? "bg-foreground text-background border-foreground"
-                      : "bg-background text-muted-foreground border-border"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+            {/* SUB‑CATEGORY FILTER PILLS – only for Menu */}
+            {mainFilter === "menu" && subCategories.length > 1 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                {subCategories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSubFilter(cat)}
+                    className={`px-3 py-1 rounded-md text-[10px] font-black uppercase transition-all border ${
+                      subFilter === cat
+                        ? "bg-foreground text-background border-foreground"
+                        : "bg-background text-muted-foreground border-border"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-2">
@@ -218,7 +243,9 @@ export function StockTab() {
 
             {availableItems.length === 0 && (
               <div className="text-center text-xs font-bold text-muted-foreground py-8 border border-dashed border-border rounded-xl">
-                No available items in this sub-category.
+                {mainFilter === "menu"
+                  ? "No available items in this sub‑category."
+                  : "No available items in this section."}
               </div>
             )}
           </div>
