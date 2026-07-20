@@ -95,10 +95,10 @@ export function useAuth() {
             setTimeout(() => {
                 if (res.user.role === 'owner') {
                     console.log('Redirecting to /dashboard');
-                    router.push('/dashboard');
+                    router.replace('/dashboard');
                 } else {
                     console.log('Redirecting to /dashboard/reception');
-                    router.push('/reception');
+                    router.replace('/reception');
                 }
             }, 100);
 
@@ -130,7 +130,7 @@ export function useAuth() {
             });
             
             setUser(res.user);
-            router.push('/dashboard');
+            router.replace('/dashboard');
             
             return { success: true, user: res.user };
         } catch (error: any) {

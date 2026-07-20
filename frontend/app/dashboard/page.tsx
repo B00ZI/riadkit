@@ -6,24 +6,24 @@ import { useRequests } from "@/hooks/useRequests";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  TrendingUp, 
-  CreditCard, 
-  ShoppingBag, 
-  Users, 
-  AlertTriangle, 
+import {
+  TrendingUp,
+  CreditCard,
+  ShoppingBag,
+  Users,
+  AlertTriangle,
   History,
   Loader2
 } from "lucide-react";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
-  Cell 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell
 } from "recharts";
 
 // Mock Data for the Revenue Chart
@@ -34,7 +34,28 @@ const chartData = [
   { month: "Apr", total: 6100 },
   { month: "May", total: 5900 },
   { month: "Jun", total: 7200 },
+  { month: "run", total: 2000 },
+  { month: "eun", total: 4400 },
+  { month: "Juwn", total: 9000 },
+  { month: "Jqun", total: 7200 },
 ];
+
+// Clean, Tailwind-styled custom tooltip
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-lg border border-border bg-popover px-3.5 py-2 shadow-md whitespace-nowrap">
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+          {label}
+        </p>
+        <p className="text-sm font-bold text-popover-foreground mt-0.5">
+          {payload[0].value.toLocaleString()} MAD
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function OwnerDashboard() {
   const { rooms, isLoading: roomsLoading, error: roomsError } = useRooms();
@@ -66,8 +87,8 @@ export default function OwnerDashboard() {
       <div className="h-96 flex flex-col items-center justify-center gap-4">
         <AlertTriangle className="w-12 h-12 text-destructive" />
         <p className="text-muted-foreground">Failed to load dashboard data</p>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => window.location.reload()}
         >
           Retry
@@ -140,34 +161,44 @@ export default function OwnerDashboard() {
             <CardTitle className="text-lg font-bold">Revenue Overview</CardTitle>
             <CardDescription>Monthly revenue trends</CardDescription>
           </CardHeader>
-          <CardContent className="h-75 pl-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                <Tooltip 
-                  cursor={{fill: 'hsl(var(--muted) / 0.4)'}} 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
-                    borderColor: 'hsl(var(--border))', 
-                    borderRadius: '8px', 
-                    color: 'hsl(var(--foreground))'
-                  }} 
-                />
-                <Bar dataKey="total" radius={[4, 4, 0, 0]}>
-                  {chartData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
-                      fill={index === chartData.length - 1 ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.4)"} 
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <CardContent className="w-full min-w-0">
+            <ResponsiveContainer width="100%" height={300}>
+  <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+    <XAxis
+      dataKey="month"
+      stroke="hsl(var(--muted-foreground))"
+      fontSize={12}
+      tickLine={false}
+      axisLine={false}
+    />
+    <YAxis
+      stroke="hsl(var(--muted-foreground))"
+      fontSize={12}
+      tickLine={false}
+      axisLine={false}
+    />
+    
+    {/* � Disable the giant column background highlight */}
+    <Tooltip content={<CustomTooltip />} cursor={false} />
+
+    <Bar
+      dataKey="total"
+      radius={[6, 6, 0, 0]}
+      maxBarSize={70} // � Replaces barSize={32} so bars scale nicely up to 48px
+    >
+      {chartData.map((entry, index) => (
+        <Cell
+          key={`cell-${index}`}
+          fill={index === chartData.length - 1 ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.3)"}
+          className="transition-opacity duration-150 hover:opacity-80"
+        />
+      ))}
+    </Bar>
+  </BarChart>
+</ResponsiveContainer>
           </CardContent>
         </Card>
-
         <Card className="md:col-span-3 bg-card border-border shadow-sm">
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -213,10 +244,9 @@ export default function OwnerDashboard() {
             <div className="space-y-4">
               {recentActivity.map((req) => (
                 <div key={req.id} className="flex gap-4 items-start border-b border-border/50 pb-3 last:border-0">
-                  <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-                    req.status === 'pending' ? 'bg-destructive' : 
+                  <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${req.status === 'pending' ? 'bg-destructive' :
                     req.status === 'in_progress' ? 'bg-amber-500' : 'bg-emerald-500'
-                  }`} />
+                    }`} />
                   <div className="flex flex-col flex-1">
                     <div className="flex justify-between">
                       <span className="text-sm font-bold text-foreground">
