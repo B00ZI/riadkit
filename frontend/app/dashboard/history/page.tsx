@@ -1,6 +1,7 @@
 // app/dashboard/history/page.tsx
 "use client";
-
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { useState, useMemo } from "react";
 import {
   Table,
@@ -74,7 +75,10 @@ const formatDate = (isoString: string) => {
   });
 };
 
+
+
 export default function OrderHistory() {
+  const searchParams = useSearchParams();
   const { requests, isLoading, error, refresh } = useRequests({
     status: "all",
   });
@@ -92,6 +96,17 @@ export default function OrderHistory() {
     "Service",
     "Excursion",
   ]);
+
+  useEffect(() => {
+    const dateParam = searchParams.get('date');
+    if (dateParam) {
+      // Automatically set the filters to that specific day
+      setFromDate(dateParam);
+      setToDate(dateParam);
+
+      setStatusFilters(["Pending", "Preparing", "Completed", "Cancelled"]);
+    }
+  }, [searchParams]);
 
   // ─── Unique room numbers from data ─────────────────────────
   const roomOptions = useMemo(() => {
