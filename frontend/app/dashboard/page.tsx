@@ -8,9 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  TrendingUp, CreditCard, ShoppingBag, Users, AlertTriangle,
-  History, Loader2, Clock, ArrowRight, Zap, PackageX,
-  ChevronRight, Calendar, Utensils, Compass, Sparkles, ArrowUpRight, CheckCircle2
+  TrendingUp, CreditCard, ShoppingBag, Users, Clock, ArrowRight,
+  PackageX, PackageCheck, ChevronRight, Calendar, Utensils,
+  Compass, Sparkles, ArrowUpRight, CheckCircle2, DoorClosed,
+  Bell, AlertCircle
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -18,7 +19,7 @@ import {
 } from "recharts";
 import Link from "next/link";
 
-// --- � MOCK DATA ---
+// --- MOCK DATA ---
 const chartData = [
   { month: "Jan", total: 4500, menu: 2000, excursions: 1500, services: 1000, orders: 42 },
   { month: "Feb", total: 5200, menu: 2500, excursions: 1200, services: 1500, orders: 48 },
@@ -37,15 +38,40 @@ const yieldHistory = [
   { date: "15 July", rawDate: "2026-07-15", total: 2700, orders: 15, menu: 1100, excursions: 1400, services: 200 },
 ];
 
-
 const fakeOutofStock = [
   { id: 1, name: "Mint Tea", category_name: "Menu" },
-  { id: 2, name: "Agafay Trip", category_name: "Excursion" },
+  { id: 2, name: "Agafay Trip", category_name: "Excursions" },
 ];
-const fakeActivity = [
-  { id: 101, room: "Room 3", item: "2x Mint Tea", price: "50", status: "pending", time: "10:45 AM", type: "menu" },
-  { id: 102, room: "Suite Majorelle", item: "1x Argan Massage", price: "450", status: "in_progress", time: "10:30 AM", type: "service" },
-  { id: 103, room: "Room 1", item: "1x Moroccan Breakfast", price: "85", status: "completed", time: "09:15 AM", type: "menu" },
+
+const fakeNotifications = [
+  {
+    id: 101,
+    title: "New Order",
+    description: "Room 3 ordered 2x Mint Tea",
+    time: "10:45 AM",
+    type: "order",
+  },
+  {
+    id: 102,
+    title: "Item Out of Stock",
+    description: "Agafay Trip was marked as out of stock",
+    time: "10:30 AM",
+    type: "stock_out",
+  },
+  {
+    id: 103,
+    title: "Order Completed",
+    description: "Room 1 - Moroccan Breakfast fulfilled",
+    time: "09:15 AM",
+    type: "completed",
+  },
+  {
+    id: 104,
+    title: "Item Restocked",
+    description: "Fresh Orange Juice is back in stock",
+    time: "08:45 AM",
+    type: "stock_in",
+  },
 ];
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -53,7 +79,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     const data = payload[0].payload;
     return (
       <div className="rounded-xl border border-border bg-popover p-4 shadow-xl min-w-[200px] animate-in fade-in zoom-in-95">
-        <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3 border-b border-border pb-2">{label} Revenue</p>
+        <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3 border-b border-border pb-2">
+          {label} Revenue
+        </p>
         <div className="space-y-2.5">
           <div className="flex justify-between items-center text-[11px] font-bold">
             <span className="flex items-center gap-2 text-muted-foreground"><Utensils className="w-3.5 h-3.5" /> Menu</span>
@@ -68,7 +96,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
             <span>{data.services.toLocaleString()} MAD</span>
           </div>
           <div className="pt-2 border-t border-border flex justify-between items-center">
-            <span className="text-xs font-black uppercase tracking-tight">Total Yield</span>
+            <span className="text-xs font-black uppercase tracking-tight">Total</span>
             <span className="text-sm font-black text-primary">{data.total.toLocaleString()} MAD</span>
           </div>
         </div>
@@ -81,97 +109,113 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export default function OwnerDashboard() {
   const { rooms, isLoading: roomsLoading } = useRooms();
   const { requests, isLoading: requestsLoading } = useRequests();
-  const { menuItems, updateMenuItem, isLoading: catalogLoading } = useCatalog();
+  const { menuItems, isLoading: catalogLoading } = useCatalog();
 
   const router = useRouter();
 
-  const outOfStockItems = menuItems.filter(item => !item.is_available);
+  const occupiedRooms = rooms?.filter((r) => r.status === "occupied").length || 2;
+  const totalRooms = rooms?.length || 5;
+
+  const pendingRequests = requests?.filter((r) => r.status === "pending").length || 2;
+  const inProgressRequests = requests?.filter((r) => r.status === "in_progress").length || 1;
+  const completedRequests = requests?.filter((r) => r.status === "completed").length || 5;
+
+  const outOfStockItems = menuItems?.filter((item) => !item.is_available) || [];
 
   if (roomsLoading || requestsLoading || catalogLoading) {
-    return <div className="h-96 flex items-center justify-center"><Loader2 className="animate-spin text-primary" /></div>;
+    return (
+      <div className="h-96 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-8 pb-10">
-      {/* ─── HEADER ─── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight uppercase">Command Center</h1>
-          <p className="text-muted-foreground text-sm font-medium italic">Riad operational analytics</p>
-        </div>
-        <Button asChild className="font-black uppercase text-[10px] tracking-widest px-6 h-10 shadow-lg shadow-primary/10">
-          <Link href="/dashboard/front-desk">Go Live <ArrowRight className="ml-2 w-3 h-3" /></Link>
-        </Button>
-      </div>
-
+    <div className="space-y-6 pb-10 pt-2">
       {/* ─── 1. TOP STATS ─── */}
       <div className="grid gap-4 md:grid-cols-4 text-card-foreground">
+        {/* Today's Revenue */}
         <Card className="bg-card border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Today's Yield</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground opacity-40" />
+            <CardTitle className="text-xs font-bold text-muted-foreground">Today's Revenue</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground opacity-50" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black italic">1,450 MAD</div>
-            <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-tight flex items-center gap-1 mt-1">
-              <TrendingUp className="w-3 h-3" /> +12.5% vs Yesterday
+            <div className="text-2xl font-black">1,450 MAD</div>
+            <p className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 mt-1">
+              <TrendingUp className="w-3.5 h-3.5" /> +12.5% vs Yesterday
             </p>
           </CardContent>
         </Card>
 
+        {/* Active Rooms */}
         <Card className="bg-card border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Active Guests</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground opacity-40" />
+            <CardTitle className="text-xs font-bold text-muted-foreground">Active Rooms</CardTitle>
+            <DoorClosed className="h-4 w-4 text-muted-foreground opacity-50" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black italic">{rooms.filter(r => r.status === 'occupied').length || 5}</div>
-            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight mt-1">In-house sessions</p>
+            <div className="text-2xl font-black">
+              {occupiedRooms} <span className="text-base text-muted-foreground font-normal">/ {totalRooms}</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground font-medium mt-1">Currently occupied</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-card border-border shadow-sm border-l-4 border-l-destructive">
+        {/* Order Status Breakdown */}
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-destructive">Attention</CardTitle>
-            <Zap className="h-4 w-4 text-destructive animate-pulse" />
+            <CardTitle className="text-xs font-bold text-muted-foreground">Order Status</CardTitle>
+            <ShoppingBag className="h-4 w-4 text-muted-foreground opacity-50" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black text-destructive italic">{requests.filter(r => r.status === 'pending').length || 2} Orders</div>
-            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight mt-1">Pending Fulfillment</p>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge variant="destructive" className="text-xs font-bold px-2 py-0.5">
+                {pendingRequests} Pending
+              </Badge>
+              <Badge variant="outline" className="text-xs font-bold border-amber-500 text-amber-600 dark:text-amber-400 px-2 py-0.5">
+                {inProgressRequests} Active
+              </Badge>
+              <Badge variant="secondary" className="text-xs font-bold text-muted-foreground px-2 py-0.5">
+                {completedRequests} Done
+              </Badge>
+            </div>
+            <p className="text-[11px] text-muted-foreground font-medium mt-2">Active fulfillment status</p>
           </CardContent>
         </Card>
 
+        {/* Fulfillment Speed */}
         <Card className="bg-card border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Speed</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground opacity-40" />
+            <CardTitle className="text-xs font-bold text-muted-foreground">Avg Speed</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground opacity-50" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black italic">14 min</div>
-            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight mt-1">Avg Request fulfillment</p>
+            <div className="text-2xl font-black">14 min</div>
+            <p className="text-[11px] text-muted-foreground font-medium mt-1">Avg request completion</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* ─── 2. REVENUE CHART ─── */}
+      {/* ─── 2. REVENUE CHART & OUT OF STOCK ─── */}
       <div className="grid gap-6 lg:grid-cols-12">
-
+        {/* Revenue Overview */}
         <Card className="lg:col-span-8 bg-card border-border shadow-sm overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg font-black uppercase tracking-tight">Revenue Overview</CardTitle>
-            <Badge variant="outline" className="font-bold text-[9px] uppercase tracking-widest">MTD Analysis</Badge>
+            <div>
+              <CardTitle className="text-base font-bold">Revenue Overview</CardTitle>
+              <CardDescription className="text-xs">Monthly earnings by category</CardDescription>
+            </div>
+            <Badge variant="outline" className="font-semibold text-[10px] uppercase tracking-wider">MTD Analysis</Badge>
           </CardHeader>
           <CardContent className="w-full">
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={280}>
               <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-
-                {/* Rich Tooltip with NO background column highlight */}
                 <Tooltip content={<CustomTooltip />} cursor={false} />
-
-                <Bar dataKey="total" radius={[6, 6, 0, 0]} maxBarSize={70}>
+                <Bar dataKey="total" radius={[6, 6, 0, 0]} maxBarSize={60}>
                   {chartData.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
@@ -185,27 +229,31 @@ export default function OwnerDashboard() {
           </CardContent>
         </Card>
 
-        {/* ─── INVENTORY ALERTS (RESTORED) ─── */}
+        {/* Out of Stock Section */}
         <Card className="lg:col-span-4 bg-card border-border shadow-sm overflow-hidden flex flex-col">
-          <CardHeader className="bg-muted/30 border-b border-border pb-4">
+          <CardHeader className="border-b border-border/60 pb-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-destructive">
-                <PackageX className="h-4 w-4" />
-                <CardTitle className="text-sm font-black uppercase tracking-widest">Inventory Leaks</CardTitle>
+              <div className="flex items-center gap-2 text-foreground">
+                <PackageX className="h-4 w-4 text-amber-500" />
+                <CardTitle className="text-sm font-bold">Out of Stock</CardTitle>
               </div>
-              <Badge variant="destructive" className="h-5 text-[9px] font-black">{outOfStockItems.length || "2"}</Badge>
+              <Badge variant="secondary" className="h-5 text-[10px] font-bold">
+                {outOfStockItems.length || "2"}
+              </Badge>
             </div>
-            <CardDescription className="text-[10px] font-bold uppercase tracking-tight opacity-70">Hidden from guests</CardDescription>
+            <CardDescription className="text-xs">Items hidden from guest catalog</CardDescription>
           </CardHeader>
-          <CardContent className="p-0 flex-1 overflow-y-auto max-h-[300px] no-scrollbar">
-            <div className="divide-y divide-border">
+          <CardContent className="p-0 flex-1 overflow-y-auto max-h-[280px]">
+            <div className="divide-y divide-border/60">
               {(outOfStockItems.length > 0 ? outOfStockItems : fakeOutofStock).map((item: any) => (
-                <div key={item.id} className="flex items-center justify-between px-4 py-4 hover:bg-muted/20 transition-colors">
+                <div key={item.id} className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors">
                   <div className="flex flex-col min-w-0 pr-2">
-                    <span className="text-[11px] font-black text-foreground truncate uppercase">{item.name}</span>
-                    <span className="text-[9px] font-bold text-muted-foreground uppercase opacity-60 tracking-tighter">{item.category_name || "Catalog"}</span>
+                    <span className="text-xs font-bold text-foreground truncate">{item.name}</span>
+                    <span className="text-[10px] font-medium text-muted-foreground">{item.category_name || "Catalog"}</span>
                   </div>
-                  <Button size="sm" variant="outline" className="h-7 text-[9px] font-black uppercase border-primary/30 text-primary px-3">Restock</Button>
+                  <Button size="sm" variant="outline" className="h-7 text-xs font-semibold px-3">
+                    Restock
+                  </Button>
                 </div>
               ))}
             </div>
@@ -213,28 +261,37 @@ export default function OwnerDashboard() {
         </Card>
       </div>
 
+      {/* ─── 3. ACTIVITY FEED & DAILY REVENUE ─── */}
       <div className="grid gap-6 lg:grid-cols-12">
-        {/* ─── 3. LIVE STREAM ─── */}
+        {/* Activity & Notifications Feed */}
         <Card className="lg:col-span-6 bg-card border-border shadow-sm overflow-hidden flex flex-col">
-          <CardHeader className="border-b border-border/50 pb-4 flex flex-row items-center justify-between">
-            <div className="flex items-center gap-2 text-foreground/80">
-              <History className="h-4 w-4" />
-              <CardTitle className="text-sm font-black uppercase tracking-widest">Live Activity</CardTitle>
+          <CardHeader className="border-b border-border/60 pb-3 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2 text-foreground">
+              <Bell className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-bold">Recent Activity</CardTitle>
             </div>
-            <Link href="/dashboard/history" className="text-[9px] font-black uppercase text-primary flex items-center hover:underline">Full Feed <ArrowUpRight className="ml-1 w-3 h-3" /></Link>
+            <Link href="/dashboard/history" className="text-xs font-semibold text-primary flex items-center hover:underline">
+              Full Feed <ArrowUpRight className="ml-1 w-3 h-3" />
+            </Link>
           </CardHeader>
-          <CardContent className="p-0 flex-1 overflow-y-auto max-h-[400px] no-scrollbar">
-            <div className="flex flex-col">
-              {(requests.length > 0 ? requests.slice(0, 6) : fakeActivity).map((req: any) => (
-                <div key={req.id} className="flex items-center px-6 py-4 border-b border-border/50 last:border-0 hover:bg-muted/10 transition-colors">
-                  <div className="w-16 shrink-0 text-[10px] font-black text-muted-foreground uppercase tracking-tighter">{req.time || "Now"}</div>
-                  <div className={`w-1 h-6 rounded-full mr-5 ${req.status === 'pending' ? 'bg-destructive' : req.status === 'in_progress' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
-                  <div className="flex-1 min-w-0 pr-4">
-                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-0.5">{req.room_number || req.room}</p>
-                    <p className="text-[13px] font-bold truncate leading-none text-foreground">{req.item_name || req.item}</p>
+          <CardContent className="p-0 flex-1 overflow-y-auto max-h-[360px]">
+            <div className="divide-y divide-border/60">
+              {fakeNotifications.map((notif) => (
+                <div key={notif.id} className="flex items-start gap-3 px-5 py-3.5 hover:bg-muted/20 transition-colors">
+                  {/* Clean contextual icons instead of solid green vertical bars */}
+                  <div className="p-2 rounded-lg bg-muted/50 text-foreground shrink-0 mt-0.5">
+                    {notif.type === "order" && <ShoppingBag className="w-3.5 h-3.5 text-blue-500" />}
+                    {notif.type === "stock_out" && <PackageX className="w-3.5 h-3.5 text-amber-500" />}
+                    {notif.type === "stock_in" && <PackageCheck className="w-3.5 h-3.5 text-emerald-500" />}
+                    {notif.type === "completed" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs font-black text-foreground italic">{req.total_price || req.price} MAD</p>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <p className="text-xs font-bold text-foreground">{notif.title}</p>
+                      <span className="text-[10px] font-medium text-muted-foreground">{notif.time}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-snug">{notif.description}</p>
                   </div>
                 </div>
               ))}
@@ -242,69 +299,67 @@ export default function OwnerDashboard() {
           </CardContent>
         </Card>
 
-        {/* �️ 4. YIELD LOG (REDESIGNED: PROFESSIONAL & CLEAN) ─── */}
+        {/* Daily Revenue Breakdown */}
         <Card className="lg:col-span-6 bg-card border-border shadow-sm overflow-hidden flex flex-col">
-          <CardHeader className="border-b border-border/50 pb-4 flex flex-row items-center justify-between">
-            <div className="flex items-center gap-2 text-foreground/80">
-              <Calendar className="h-4 w-4" />
-              <CardTitle className="text-sm font-black uppercase tracking-widest">Daily Yield Log</CardTitle>
+          <CardHeader className="border-b border-border/60 pb-3 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2 text-foreground">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-bold">Daily Revenue</CardTitle>
             </div>
-            <Badge variant="secondary" className="text-[9px] font-black uppercase opacity-60">7-Day History</Badge>
+            <Badge variant="secondary" className="text-[10px] font-semibold">7-Day History</Badge>
           </CardHeader>
 
-          <CardContent className="p-0 flex-1 overflow-y-auto max-h-[400px] no-scrollbar">
-            <div className="divide-y divide-border">
+          <CardContent className="p-0 flex-1 overflow-y-auto max-h-[360px]">
+            <div className="divide-y divide-border/60">
               {yieldHistory.map((day, i) => (
                 <div
                   key={i}
-                  // 🔥 Redirect logic with URL parameters
                   onClick={() => router.push(`/dashboard/history?date=${day.rawDate}`)}
-                  className="px-6 py-4 hover:bg-primary/[0.03] cursor-pointer transition-all flex items-center justify-between group"
+                  className="px-5 py-3.5 hover:bg-muted/30 cursor-pointer transition-colors flex items-center justify-between group"
                 >
-                  <div className="space-y-1.5 flex-1 min-w-0">
+                  <div className="space-y-1 flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-xs font-black uppercase tracking-tight text-foreground group-hover:text-primary transition-colors">
+                      <p className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
                         {day.date}
                       </p>
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 bg-muted rounded text-muted-foreground uppercase">
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 bg-muted rounded text-muted-foreground">
                         {day.orders} Orders
                       </span>
                     </div>
 
-                    {/* Professional Breakdown Row */}
-                    <div className="flex items-center gap-4 text-[10px] font-bold text-muted-foreground/70 tracking-tighter">
+                    <div className="flex items-center gap-3 text-[11px] font-medium text-muted-foreground">
                       <div className="flex items-center gap-1">
-                        <Utensils className="w-2.5 h-2.5 opacity-50" /> {day.menu}
+                        <Utensils className="w-3 h-3 opacity-60" /> {day.menu} MAD
                       </div>
                       <div className="flex items-center gap-1">
-                        <Compass className="w-2.5 h-2.5 opacity-50" /> {day.excursions}
+                        <Compass className="w-3 h-3 opacity-60" /> {day.excursions} MAD
                       </div>
                       <div className="flex items-center gap-1">
-                        <Sparkles className="w-2.5 h-2.5 opacity-50" /> {day.services}
+                        <Sparkles className="w-3 h-3 opacity-60" /> {day.services} MAD
                       </div>
                     </div>
                   </div>
 
-                  <div className="text-right flex items-center gap-4">
+                  <div className="text-right flex items-center gap-3">
                     <div className="flex flex-col items-end">
-                      <div className="flex items-center gap-1 text-[9px] font-black text-muted-foreground uppercase tracking-widest opacity-60">
-                        <CreditCard className="w-2.5 h-2.5" /> Total
-                      </div>
-                      <p className="text-sm font-black text-foreground italic">
+                      <span className="text-[10px] font-medium text-muted-foreground">Total</span>
+                      <p className="text-xs font-bold text-foreground">
                         {day.total.toLocaleString()} MAD
                       </p>
                     </div>
-                    {/* Animated Chevron for better click affordance */}
-                    <ChevronRight className="w-4 h-4 text-muted-foreground/20 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                   </div>
                 </div>
               ))}
             </div>
           </CardContent>
 
-          <CardFooter className="p-3 border-t border-border bg-muted/10">
-            <Button variant="ghost" className="w-full text-[9px] font-black uppercase tracking-widest opacity-50 h-8">
-              Generate Weekly Report
+          {/* Clean Navigation link to History page */}
+          <CardFooter className="p-2.5 border-t border-border/60 bg-muted/20">
+            <Button asChild variant="ghost" className="w-full text-xs font-semibold hover:bg-muted h-8">
+              <Link href="/dashboard/history" className="flex items-center justify-center gap-1 text-muted-foreground hover:text-foreground">
+                View Full History <ArrowRight className="w-3.5 h-3.5 ml-1" />
+              </Link>
             </Button>
           </CardFooter>
         </Card>
