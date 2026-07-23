@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Primary Demo Riad
+        // 1. Create Demo Riad
         $demoRiad = Riad::factory()->create([
             'name' => 'Riad Jardin de Marrakech',
             'subdomain' => 'jardin',
@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
             'currency' => 'MAD',
         ]);
 
-        // 2. Demo Riad Owner
+        // 2. Owner Account
         User::factory()->create([
             'riad_id' => $demoRiad->id,
             'name' => 'Riad Owner',
@@ -33,12 +33,12 @@ class DatabaseSeeder extends Seeder
             'role' => 'owner',
         ]);
 
-        // 3. Create Rooms
+        // 3. Rooms
         $rooms = Room::factory()->count(6)->create([
             'riad_id' => $demoRiad->id,
         ]);
 
-        // 4. Create Menu Categories & Items
+        // 4. Menu Items
         $menuCategories = ['Breakfast & Drinks', 'Traditional Dishes', 'Desserts'];
         foreach ($menuCategories as $catName) {
             $cat = Category::factory()->create([
@@ -47,13 +47,13 @@ class DatabaseSeeder extends Seeder
                 'type' => 'menu',
             ]);
 
-            MenuItem::factory()->count(4)->create([
+            MenuItem::factory()->count(10)->create([
                 'riad_id' => $demoRiad->id,
                 'category_id' => $cat->id,
             ]);
         }
 
-        // 5. Create Service Categories & Services
+        // 5. Services
         $serviceCategories = ['Wellness & Spa', 'Housekeeping & Amenities', 'Transport'];
         foreach ($serviceCategories as $catName) {
             $cat = Category::factory()->create([
@@ -62,36 +62,58 @@ class DatabaseSeeder extends Seeder
                 'type' => 'service',
             ]);
 
-            Service::factory()->count(3)->create([
+            Service::factory()->count(5)->create([
                 'riad_id' => $demoRiad->id,
                 'category_id' => $cat->id,
             ]);
         }
 
         // 6. Excursions
-        Excursion::factory()->count(4)->create([
+        Excursion::factory()->count(8)->create([
             'riad_id' => $demoRiad->id,
         ]);
 
-        // 7. Generate Guest Requests across different states for each Room
+        // Fetch array of real, existing IDs
+        $menuItemIds = MenuItem::where('riad_id', $demoRiad->id)->pluck('id')->toArray();
+        $serviceIds  = Service::where('riad_id', $demoRiad->id)->pluck('id')->toArray();
+        $excursionIds = Excursion::where('riad_id', $demoRiad->id)->pluck('id')->toArray();
+
+        // Helper function to pick a valid ID based on type
+        $getValidItemId = function (string $type) use ($menuItemIds, $serviceIds, $excursionIds) {
+            return match ($type) {
+                'menu' => fake()->randomElement($menuItemIds),
+                'service'   => fake()->randomElement($serviceIds),
+                'excursion' => fake()->randomElement($excursionIds),
+                default     => fake()->randomElement($menuItemIds),
+            };
+        };
+
+        // 7. Seed active requests for live view (Today)
         foreach ($rooms as $room) {
-            // Guarantee at least 1 pending, 1 in_progress, and 1 completed request per room
             GuestRequest::factory()->pending()->create([
                 'riad_id' => $demoRiad->id,
                 'room_id' => $room->id,
                 'type' => 'service',
+                'item_id' => fake()->randomElement($serviceIds),
             ]);
 
             GuestRequest::factory()->inProgress()->create([
                 'riad_id' => $demoRiad->id,
                 'room_id' => $room->id,
-                'type' => 'menu_item',
+                'type' => 'menu',
+                'item_id' => fake()->randomElement($menuItemIds),
             ]);
+        }
+
+        // 8. Seed 150 historical completed requests spread across the entire year for charts
+        for ($i = 0; $i < 150; $i++) {
+            $type = fake()->randomElement(['menu', 'service', 'excursion']);
 
             GuestRequest::factory()->completed()->create([
                 'riad_id' => $demoRiad->id,
-                'room_id' => $room->id,
-                'type' => 'excursion',
+                'room_id' => $rooms->random()->id,
+                'type' => $type,
+                'item_id' => $getValidItemId($type),
             ]);
         }
     }

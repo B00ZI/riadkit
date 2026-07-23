@@ -10,42 +10,49 @@ class GuestRequestFactory extends Factory
 {
     public function definition(): array
     {
-        $types = ['menu_item', 'service', 'excursion', 'custom'];
-        $type = fake()->randomElement($types);
+        $type = fake()->randomElement(['menu', 'service', 'excursion']);
 
         return [
             'riad_id' => Riad::factory(),
             'room_id' => Room::factory(),
             'session_id' => Str::random(20),
             'type' => $type,
-            'item_id' => fake()->numberBetween(1, 20),
+            'item_id' => 1, // Will be overridden dynamically in DatabaseSeeder
             'quantity' => fake()->numberBetween(1, 4),
-            'notes' => fake()->optional(60)->randomElement([
+            'notes' => fake()->optional(40)->randomElement([
                 'Please bring extra sugar with tea.',
-                'Need this as soon as possible.',
-                'Packaged for takeaway please.',
                 'Room needs to be cleaned before 2 PM.',
+                'Packaged for takeaway please.',
             ]),
-            // Spread statuses to simulate a real live dashboard
-            'status' => fake()->randomElement(['pending', 'pending', 'in_progress', 'completed', 'cancelled']),
+            'status' => fake()->randomElement(['pending', 'in_progress', 'completed', 'cancelled']),
+            // Random dates across the last 12 months for chart historical revenue data
+            'created_at' => fake()->dateTimeBetween('-1 year', 'now'),
+            'updated_at' => fn (array $attrs) => $attrs['created_at'],
         ];
     }
 
-    /**
-     * Helper states to force specific statuses when seeding testing data
-     */
     public function pending(): static
     {
-        return $this->state(fn (array $attributes) => ['status' => 'pending']);
+        return $this->state(fn (array $attributes) => [
+            'status' => 'pending',
+            'created_at' => now(),
+        ]);
     }
 
     public function inProgress(): static
     {
-        return $this->state(fn (array $attributes) => ['status' => 'in_progress']);
+        return $this->state(fn (array $attributes) => [
+            'status' => 'in_progress',
+            'created_at' => now(),
+        ]);
     }
 
     public function completed(): static
     {
-        return $this->state(fn (array $attributes) => ['status' => 'completed']);
+        return $this->state(fn (array $attributes) => [
+            'status' => 'completed',
+            // Completed orders distributed across the whole past year
+            'created_at' => fake()->dateTimeBetween('-1 year', 'now'),
+        ]);
     }
 }
