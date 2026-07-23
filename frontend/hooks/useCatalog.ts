@@ -73,6 +73,7 @@ export type CreateServicePayload = {
     price?: number;
     requires_quantity?: boolean;
     category_id?: number;
+    is_available?: boolean;
 };
 
 export type UpdateServicePayload = Partial<CreateServicePayload> & {
@@ -84,6 +85,7 @@ export type CreateExcursionPayload = {
     description?: string;
     price: number;
     duration: string;
+    is_available?: boolean;
 };
 
 export type UpdateExcursionPayload = Partial<CreateExcursionPayload> & {

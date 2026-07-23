@@ -1,4 +1,3 @@
-// hooks/useRequests.ts
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { fetchApi } from '@/lib/api';
 import Cookies from 'js-cookie';
@@ -13,15 +12,15 @@ export type GuestRequest = {
     status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
     total_price: string;
     created_at: string;
-    created_at_raw?: string; // ISO date string for frontend filtering
+    created_at_raw?: string;
     notes?: string;
 };
 
 export type UseRequestsOptions = {
-    status?: string;       // comma-separated, e.g., 'pending,in_progress'
-    days?: number;         // only restricts 'completed' orders
-    from?: string;         // YYYY-MM-DD
-    to?: string;           // YYYY-MM-DD
+    status?: string;
+    days?: number;
+    from?: string;
+    to?: string;
     sort?: 'asc' | 'desc';
 };
 
@@ -30,7 +29,8 @@ export function useRequests(options?: UseRequestsOptions) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
-    // Store options in ref to avoid re-creating the fetch function on every change
+    // Stable serialized representation of options to prevent infinite interval resets
+    const optionsKey = JSON.stringify(options ?? {});
     const optionsRef = useRef(options);
     optionsRef.current = options;
 
@@ -47,25 +47,26 @@ export function useRequests(options?: UseRequestsOptions) {
         return query ? `?${query}` : '';
     }, []);
 
-    // ─── Fetch Requests ──────────────────────────────────────
-    const fetchRequests = useCallback(async (fetchOptions?: UseRequestsOptions) => {
+    // ─── Fetch Requests (Silent Background Support) ─────────
+    const fetchRequests = useCallback(async (fetchOptions?: UseRequestsOptions, isSilent = false) => {
         const token = Cookies.get('riadkit_staff_token');
         if (!token) {
             setIsLoading(false);
             return;
         }
 
-        // Use provided options or fallback to the hook's options
         const opts = fetchOptions || optionsRef.current;
         const queryString = buildQueryString(opts);
         
         try {
-            setError(null);
+            // Only toggle loading UI if it's the initial load, not a background poll
+            if (!isSilent && requests.length === 0) {
+                setIsLoading(true);
+            }
+
             const response = await fetchApi<any>(`/api/requests${queryString}`);
             
-            // Handle both array and object responses
             let requestsData = response;
-            
             if (response && typeof response === 'object' && !Array.isArray(response)) {
                 if (response.data && Array.isArray(response.data)) {
                     requestsData = response.data;
@@ -77,54 +78,58 @@ export function useRequests(options?: UseRequestsOptions) {
             }
             
             setRequests(Array.isArray(requestsData) ? requestsData : []);
-        } catch (error: any) {
-            console.error('Failed to fetch requests:', error);
-            setError(error.message || 'Failed to load requests');
-            setRequests([]);
+            setError(null);
+        } catch (err: any) {
+            console.error('Failed to fetch requests:', err);
+            // Only surface error if we have no existing requests to display
+            if (requests.length === 0) {
+                setError(err.message || 'Failed to load requests');
+            }
         } finally {
             setIsLoading(false);
         }
     }, [buildQueryString]);
 
-    // ─── Refresh with New Options ────────────────────────────
+    // ─── Refresh Handler ─────────────────────────────────────
     const refresh = useCallback((newOptions?: UseRequestsOptions) => {
-        return fetchRequests(newOptions);
+        return fetchRequests(newOptions, false);
     }, [fetchRequests]);
 
-    // ─── Initial Fetch & Polling ─────────────────────────────
+    // ─── Initial Fetch & Controlled Polling ─────────────────
     useEffect(() => {
-        fetchRequests();
+        // Initial fetch (shows loader if empty)
+        fetchRequests(undefined, false);
 
+        // Silent background polling every 20 seconds
         const interval = setInterval(() => {
-            fetchRequests();
-        }, 30000); // Poll every 30 seconds
+            fetchRequests(undefined, true);
+        }, 20000);
 
         return () => clearInterval(interval);
-    }, [fetchRequests]);
+    }, [optionsKey, fetchRequests]);
 
-    // ─── Update Status ────────────────────────────────────────
+    // ─── Optimistic Update Status ────────────────────────────
     const updateStatus = async (requestId: number, status: GuestRequest['status']) => {
+        // 1. Instant local state mutation
+        setRequests(prev => prev.map(req =>
+            req.id === requestId ? { ...req, status } : req
+        ));
+
         try {
             setError(null);
             await fetchApi(`/api/requests/${requestId}`, {
                 method: 'PATCH',
                 body: JSON.stringify({ status })
             });
-            
-            // Optimistic update – keep the request in the list with new status
-            setRequests(prev => prev.map(req =>
-                req.id === requestId ? { ...req, status } : req
-            ));
-            
-            // After a moment, re-fetch to sync with server (optional)
-            // This ensures any server-side changes are reflected
-            setTimeout(() => fetchRequests(), 500);
-        } catch (error: any) {
-            console.error('Failed to update status:', error);
-            setError(error.message || 'Failed to update request status');
-            // Revert by re-fetching
-            await fetchRequests();
-            throw error;
+
+            // 2. Silent sync after update completes
+            fetchRequests(undefined, true);
+        } catch (err: any) {
+            console.error('Failed to update status:', err);
+            setError(err.message || 'Failed to update request status');
+            // Revert state by re-fetching
+            await fetchRequests(undefined, false);
+            throw err;
         }
     };
 
@@ -134,7 +139,6 @@ export function useRequests(options?: UseRequestsOptions) {
         error,
         updateStatus, 
         refresh,
-        // Convenience: re-fetch with new options
         fetch: fetchRequests,
     };
 }

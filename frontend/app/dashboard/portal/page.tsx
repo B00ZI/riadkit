@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSettings } from "@/hooks/useSettings";
 import { useCatalog } from "@/hooks/useCatalog";
 import type { Category, MenuItem, Service, Excursion } from "@/hooks/useCatalog";
@@ -40,16 +40,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
   Info,
-  Plus,
-  Trash2,
-  Wifi,
-  Clock,
-  GripVertical,
   Utensils,
   Sparkles,
-  Save,
-  MessageCircle,
-  Pencil,
   Globe,
   AlertTriangle,
 } from "lucide-react";
@@ -63,6 +55,7 @@ export default function GuestPortalManagement() {
     isUpdating,
   } = useSettings();
 
+  const catalog = useCatalog();
   const {
     categories,
     menuItems,
@@ -80,11 +73,11 @@ export default function GuestPortalManagement() {
     addService,
     updateService,
     deleteService,
-  } = useCatalog();
+  } = catalog;
 
   // ─── State ──────────────────────────────────────────────────
   const [localSettings, setLocalSettings] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<string>("info"); // ✅ controlled tab
+  const [activeTab, setActiveTab] = useState<string>("info");
 
   // Dialog states
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
@@ -126,7 +119,7 @@ export default function GuestPortalManagement() {
     requires_quantity: false,
   });
 
-  // ─── Effects ──────────────────────────────────────────────────
+  // ─── Sync Settings ──────────────────────────────────────────
   useEffect(() => {
     if (settings) {
       setLocalSettings({
@@ -139,6 +132,41 @@ export default function GuestPortalManagement() {
       });
     }
   }, [settings]);
+
+  // ─── Out Of Stock / Availability Handlers ───────────────────
+  
+  const handleToggleMenuItemAvailability = useCallback(
+    async (id: number, isAvailable: boolean) => {
+      if ((catalog as any).toggleMenuItemAvailability) {
+        await (catalog as any).toggleMenuItemAvailability(id, isAvailable);
+      } else {
+        await updateMenuItem(id, { is_available: isAvailable });
+      }
+    },
+    [catalog, updateMenuItem]
+  );
+
+  const handleToggleExcursionAvailability = useCallback(
+    async (id: number, isAvailable: boolean) => {
+      if ((catalog as any).toggleExcursionAvailability) {
+        await (catalog as any).toggleExcursionAvailability(id, isAvailable);
+      } else {
+        await updateExcursion(id, { is_available: isAvailable });
+      }
+    },
+    [catalog, updateExcursion]
+  );
+
+  const handleToggleServiceAvailability = useCallback(
+    async (id: number, isAvailable: boolean) => {
+      if ((catalog as any).toggleServiceAvailability) {
+        await (catalog as any).toggleServiceAvailability(id, isAvailable);
+      } else {
+        await updateService(id, { is_available: isAvailable });
+      }
+    },
+    [catalog, updateService]
+  );
 
   // ─── Handlers ─────────────────────────────────────────────────
 
@@ -343,7 +371,6 @@ export default function GuestPortalManagement() {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start pb-20">
         {/* ─── LEFT: EDITOR ───────────────────────────────────── */}
         <div className="xl:col-span-7">
-          {/* ✅ Controlled Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid grid-cols-4 w-full h-12 bg-muted/50 p-1 rounded-xl mb-6">
               <TabsTrigger value="info" className="text-[10px] font-black uppercase flex items-center gap-1.5">
@@ -378,6 +405,7 @@ export default function GuestPortalManagement() {
                 onOpenItemDialog={openItemDialog}
                 onDeleteCategory={(id, name) => confirmDelete('category', id, name)}
                 onDeleteMenuItem={(id, name) => confirmDelete('menuItem', id, name)}
+                onToggleAvailability={handleToggleMenuItemAvailability}
               />
             </TabsContent>
 
@@ -386,6 +414,7 @@ export default function GuestPortalManagement() {
                 excursions={excursions}
                 onOpenDialog={openExcursionDialog}
                 onDelete={(id, name) => confirmDelete('excursion', id, name)}
+                onToggleAvailability={handleToggleExcursionAvailability}
               />
             </TabsContent>
 
@@ -394,6 +423,7 @@ export default function GuestPortalManagement() {
                 services={services}
                 onOpenDialog={openServiceDialog}
                 onDelete={(id, name) => confirmDelete('service', id, name)}
+                onToggleAvailability={handleToggleServiceAvailability}
               />
             </TabsContent>
           </Tabs>
@@ -414,7 +444,7 @@ export default function GuestPortalManagement() {
 
       {/* Category Dialog */}
       <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
-        <DialogContent className="sm:max-w-106.25">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle className="font-black uppercase tracking-tight">New Category</DialogTitle>
             <DialogDescription>
@@ -471,7 +501,7 @@ export default function GuestPortalManagement() {
 
       {/* Menu Item Dialog */}
       <Dialog open={itemDialogOpen} onOpenChange={setItemDialogOpen}>
-        <DialogContent className="sm:max-w-106.25">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle className="font-black uppercase tracking-tight">
               {isEditMode ? "Edit" : "New"} Menu Item
@@ -533,7 +563,7 @@ export default function GuestPortalManagement() {
 
       {/* Excursion Dialog */}
       <Dialog open={excursionDialogOpen} onOpenChange={setExcursionDialogOpen}>
-        <DialogContent className="sm:max-w-106.25">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle className="font-black uppercase tracking-tight">
               {isEditMode ? "Edit" : "New"} Excursion
@@ -608,7 +638,7 @@ export default function GuestPortalManagement() {
 
       {/* Service Dialog */}
       <Dialog open={serviceDialogOpen} onOpenChange={setServiceDialogOpen}>
-        <DialogContent className="sm:max-w-106.25">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle className="font-black uppercase tracking-tight">
               {isEditMode ? "Edit" : "New"} Service
