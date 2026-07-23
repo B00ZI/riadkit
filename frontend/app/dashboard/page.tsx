@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRooms } from "@/hooks/useRooms";
 import { useRequests } from "@/hooks/useRequests";
@@ -8,71 +9,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  TrendingUp, CreditCard, ShoppingBag, Users, Clock, ArrowRight,
+  TrendingUp, CreditCard, ShoppingBag, DoorClosed, Clock,
   PackageX, PackageCheck, ChevronRight, Calendar, Utensils,
-  Compass, Sparkles, ArrowUpRight, CheckCircle2, DoorClosed,
-  Bell, AlertCircle
+  Compass, Sparkles, ArrowUpRight, CheckCircle2, Bell, RefreshCw, AlertCircle
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell
 } from "recharts";
 import Link from "next/link";
-
-// --- MOCK DATA ---
-const chartData = [
-  { month: "Jan", total: 4500, menu: 2000, excursions: 1500, services: 1000, orders: 42 },
-  { month: "Feb", total: 5200, menu: 2500, excursions: 1200, services: 1500, orders: 48 },
-  { month: "Mar", total: 4800, menu: 2100, excursions: 1800, services: 900, orders: 45 },
-  { month: "Apr", total: 6100, menu: 3000, excursions: 2000, services: 1100, orders: 58 },
-  { month: "May", total: 5900, menu: 2800, excursions: 1900, services: 1200, orders: 55 },
-  { month: "Jun", total: 7200, menu: 3500, excursions: 2500, services: 1200, orders: 68 },
-  { month: "Jul", total: 8400, menu: 4200, excursions: 3000, services: 1200, orders: 82 },
-];
-
-const yieldHistory = [
-  { date: "Yesterday", rawDate: "2026-07-19", total: 2450, orders: 14, menu: 1200, excursions: 1100, services: 150 },
-  { date: "18 July", rawDate: "2026-07-18", total: 1800, orders: 9, menu: 900, excursions: 800, services: 100 },
-  { date: "17 July", rawDate: "2026-07-17", total: 3100, orders: 18, menu: 1500, excursions: 1400, services: 200 },
-  { date: "16 July", rawDate: "2026-07-16", total: 1200, orders: 6, menu: 800, excursions: 300, services: 100 },
-  { date: "15 July", rawDate: "2026-07-15", total: 2700, orders: 15, menu: 1100, excursions: 1400, services: 200 },
-];
-
-const fakeOutofStock = [
-  { id: 1, name: "Mint Tea", category_name: "Menu" },
-  { id: 2, name: "Agafay Trip", category_name: "Excursions" },
-];
-
-const fakeNotifications = [
-  {
-    id: 101,
-    title: "New Order",
-    description: "Room 3 ordered 2x Mint Tea",
-    time: "10:45 AM",
-    type: "order",
-  },
-  {
-    id: 102,
-    title: "Item Out of Stock",
-    description: "Agafay Trip was marked as out of stock",
-    time: "10:30 AM",
-    type: "stock_out",
-  },
-  {
-    id: 103,
-    title: "Order Completed",
-    description: "Room 1 - Moroccan Breakfast fulfilled",
-    time: "09:15 AM",
-    type: "completed",
-  },
-  {
-    id: 104,
-    title: "Item Restocked",
-    description: "Fresh Orange Juice is back in stock",
-    time: "08:45 AM",
-    type: "stock_in",
-  },
-];
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -107,48 +52,224 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function OwnerDashboard() {
+  const router = useRouter();
   const { rooms, isLoading: roomsLoading } = useRooms();
   const { requests, isLoading: requestsLoading } = useRequests();
-  const { menuItems, isLoading: catalogLoading } = useCatalog();
+  const {
+    menuItems,
+    services,
+    excursions,
+    toggleMenuItemAvailability,
+    toggleServiceAvailability,
+    toggleExcursionAvailability,
+    isLoading: catalogLoading,
+  } = useCatalog();
 
-  const router = useRouter();
+  const [restockingId, setRestockingId] = useState<string | null>(null);
 
-  const occupiedRooms = rooms?.filter((r) => r.status === "occupied").length || 2;
-  const totalRooms = rooms?.length || 5;
+  // ─── 1. REAL METRICS COMPUTATIONS ─────────────────────────────────
+  
+  // Active Rooms
+  const totalRooms = rooms?.length || 0;
+  const occupiedRooms = rooms?.filter((r) => r.status === "occupied").length || 0;
 
-  const pendingRequests = requests?.filter((r) => r.status === "pending").length || 2;
-  const inProgressRequests = requests?.filter((r) => r.status === "in_progress").length || 1;
-  const completedRequests = requests?.filter((r) => r.status === "completed").length || 5;
+  // Order Counts
+  const pendingRequests = requests?.filter((r) => r.status === "pending") || [];
+  const inProgressRequests = requests?.filter((r) => r.status === "in_progress") || [];
+  const completedRequests = requests?.filter((r) => r.status === "completed") || [];
 
-  const outOfStockItems = menuItems?.filter((item) => !item.is_available) || [];
+  // Out of Stock Items combined from Menu, Services & Excursions
+  const outOfStockItems = useMemo(() => {
+    const unavailMenu = (menuItems || [])
+      .filter((i) => !i.is_available)
+      .map((i) => ({ ...i, item_type: "menu" as const, cat_name: "Menu" }));
+    const unavailServices = (services || [])
+      .filter((s) => !s.is_available)
+      .map((s) => ({ ...s, item_type: "service" as const, cat_name: "Service" }));
+    const unavailExcursions = (excursions || [])
+      .filter((e) => !e.is_available)
+      .map((e) => ({ ...e, item_type: "excursion" as const, cat_name: "Excursion" }));
+
+    return [...unavailMenu, ...unavailServices, ...unavailExcursions];
+  }, [menuItems, services, excursions]);
+
+  // Restock Handler
+  const handleRestock = async (item: typeof outOfStockItems[0]) => {
+    const key = `${item.item_type}-${item.id}`;
+    setRestockingId(key);
+    try {
+      if (item.item_type === "menu") await toggleMenuItemAvailability(item.id, true);
+      else if (item.item_type === "service") await toggleServiceAvailability(item.id, true);
+      else if (item.item_type === "excursion") await toggleExcursionAvailability(item.id, true);
+    } catch (e) {
+      console.error("Restock failed", e);
+    } finally {
+      setRestockingId(null);
+    }
+  };
+
+  // Today's & Yesterday's Revenue Calculation
+  const { todayTotal, growthPercent } = useMemo(() => {
+    if (!requests || requests.length === 0) return { todayTotal: 0, growthPercent: 0 };
+
+    const todayStr = new Date().toISOString().split("T")[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+    let todaySum = 0;
+    let yesterdaySum = 0;
+
+    requests.forEach((req) => {
+      if (req.status === "cancelled" || !req.created_at_raw) return;
+      const reqDateStr = req.created_at_raw.split("T")[0];
+      const amount = parseFloat(req.total_price) || 0;
+
+      if (reqDateStr === todayStr) todaySum += amount;
+      if (reqDateStr === yesterdayStr) yesterdaySum += amount;
+    });
+
+    let growth = 0;
+    if (yesterdaySum > 0) {
+      growth = ((todaySum - yesterdaySum) / yesterdaySum) * 100;
+    } else if (todaySum > 0) {
+      growth = 100;
+    }
+
+    return { todayTotal: todaySum, growthPercent: Math.round(growth * 10) / 10 };
+  }, [requests]);
+
+  // 7-Day Revenue History Log
+  const yieldHistory = useMemo(() => {
+    const historyMap: Record<string, { dateLabel: string; rawDate: string; total: number; orders: number; menu: number; excursions: number; services: number }> = {};
+
+    // Build last 7 days entries
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const rawDate = d.toISOString().split("T")[0];
+      const dateLabel = i === 0 ? "Today" : i === 1 ? "Yesterday" : d.toLocaleDateString("en-US", { day: "numeric", month: "short" });
+
+      historyMap[rawDate] = { dateLabel, rawDate, total: 0, orders: 0, menu: 0, excursions: 0, services: 0 };
+    }
+
+    (requests || []).forEach((req) => {
+      if (req.status === "cancelled" || !req.created_at_raw) return;
+      const rawDate = req.created_at_raw.split("T")[0];
+
+      if (historyMap[rawDate]) {
+        const amt = parseFloat(req.total_price) || 0;
+        historyMap[rawDate].total += amt;
+        historyMap[rawDate].orders += 1;
+
+        if (req.type === "menu") historyMap[rawDate].menu += amt;
+        else if (req.type === "excursion") historyMap[rawDate].excursions += amt;
+        else if (req.type === "service") historyMap[rawDate].services += amt;
+      }
+    });
+
+    return Object.values(historyMap);
+  }, [requests]);
+
+  // Monthly Revenue Chart Data (Last 6 Months)
+  const chartData = useMemo(() => {
+    const monthsMap: Record<string, { month: string; total: number; menu: number; excursions: number; services: number }> = {};
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    // Initialize last 6 months
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      const monthLabel = monthNames[d.getMonth()];
+      monthsMap[key] = { month: monthLabel, total: 0, menu: 0, excursions: 0, services: 0 };
+    }
+
+    (requests || []).forEach((req) => {
+      if (req.status === "cancelled" || !req.created_at_raw) return;
+      const d = new Date(req.created_at_raw);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+
+      if (monthsMap[key]) {
+        const amt = parseFloat(req.total_price) || 0;
+        monthsMap[key].total += amt;
+        if (req.type === "menu") monthsMap[key].menu += amt;
+        else if (req.type === "excursion") monthsMap[key].excursions += amt;
+        else if (req.type === "service") monthsMap[key].services += amt;
+      }
+    });
+
+    return Object.values(monthsMap);
+  }, [requests]);
+
+  // Combined Activity & Notification Feed
+  const activityNotifications = useMemo(() => {
+    const list: Array<{ id: string; title: string; description: string; time: string; type: "order" | "stock_out" | "completed" }> = [];
+
+    // Recent Requests
+    (requests || []).slice(0, 6).forEach((req) => {
+      if (req.status === "pending") {
+        list.push({
+          id: `req-${req.id}`,
+          title: `New Order (${req.room_number})`,
+          description: `${req.quantity}x ${req.item_name} - ${req.total_price} MAD`,
+          time: req.created_at || "Recently",
+          type: "order",
+        });
+      } else if (req.status === "completed") {
+        list.push({
+          id: `req-${req.id}`,
+          title: `Order Fulfilled`,
+          description: `${req.room_number} - ${req.item_name}`,
+          time: req.created_at || "Recently",
+          type: "completed",
+        });
+      }
+    });
+
+    // Out of Stock Notifications
+    outOfStockItems.forEach((item) => {
+      list.push({
+        id: `stock-${item.item_type}-${item.id}`,
+        title: "Item Out of Stock",
+        description: `${item.name} (${item.cat_name}) is currently unavailable`,
+        time: "Active alert",
+        type: "stock_out",
+      });
+    });
+
+    return list.slice(0, 7);
+  }, [requests, outOfStockItems]);
 
   if (roomsLoading || requestsLoading || catalogLoading) {
     return (
       <div className="h-96 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <RefreshCw className="animate-spin h-6 w-6 text-primary" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6 pb-10 pt-2">
-      {/* ─── 1. TOP STATS ─── */}
+      {/* ─── 1. TOP STATS ROW (3 COLUMNS WITH EXPANDED ORDER STATUS) ─── */}
       <div className="grid gap-4 md:grid-cols-4 text-card-foreground">
-        {/* Today's Revenue */}
+        
+        {/* Card 1: Today's Revenue */}
         <Card className="bg-card border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
             <CardTitle className="text-xs font-bold text-muted-foreground">Today's Revenue</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground opacity-50" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black">1,450 MAD</div>
-            <p className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 mt-1">
-              <TrendingUp className="w-3.5 h-3.5" /> +12.5% vs Yesterday
+            <div className="text-2xl font-black">{todayTotal.toLocaleString()} MAD</div>
+            <p className={`text-[11px] font-semibold flex items-center gap-1 mt-1 ${growthPercent >= 0 ? "text-emerald-600" : "text-destructive"}`}>
+              <TrendingUp className="w-3.5 h-3.5" />
+              {growthPercent >= 0 ? `+${growthPercent}%` : `${growthPercent}%`} vs Yesterday
             </p>
           </CardContent>
         </Card>
 
-        {/* Active Rooms */}
+        {/* Card 2: Active Rooms */}
         <Card className="bg-card border-border shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
             <CardTitle className="text-xs font-bold text-muted-foreground">Active Rooms</CardTitle>
@@ -162,49 +283,41 @@ export default function OwnerDashboard() {
           </CardContent>
         </Card>
 
-        {/* Order Status Breakdown */}
-        <Card className="bg-card border-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-            <CardTitle className="text-xs font-bold text-muted-foreground">Order Status</CardTitle>
+        {/* Card 3: Expanded & Cleaner Order Status (Spans 2 columns) */}
+        <Card className="md:col-span-2 bg-card border-border shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs font-bold text-muted-foreground">Order Status Overview</CardTitle>
             <ShoppingBag className="h-4 w-4 text-muted-foreground opacity-50" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant="destructive" className="text-xs font-bold px-2 py-0.5">
-                {pendingRequests} Pending
-              </Badge>
-              <Badge variant="outline" className="text-xs font-bold border-amber-500 text-amber-600 dark:text-amber-400 px-2 py-0.5">
-                {inProgressRequests} Active
-              </Badge>
-              <Badge variant="secondary" className="text-xs font-bold text-muted-foreground px-2 py-0.5">
-                {completedRequests} Done
-              </Badge>
-            </div>
-            <p className="text-[11px] text-muted-foreground font-medium mt-2">Active fulfillment status</p>
-          </CardContent>
-        </Card>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="p-2.5 rounded-lg bg-destructive/10 border border-destructive/20 flex flex-col">
+                <span className="text-[10px] font-bold uppercase text-destructive tracking-wider">Pending</span>
+                <span className="text-xl font-black text-destructive mt-0.5">{pendingRequests.length}</span>
+              </div>
 
-        {/* Fulfillment Speed */}
-        <Card className="bg-card border-border shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-            <CardTitle className="text-xs font-bold text-muted-foreground">Avg Speed</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground opacity-50" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-black">14 min</div>
-            <p className="text-[11px] text-muted-foreground font-medium mt-1">Avg request completion</p>
+              <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 flex flex-col">
+                <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400 tracking-wider">In Progress</span>
+                <span className="text-xl font-black text-amber-600 dark:text-amber-400 mt-0.5">{inProgressRequests.length}</span>
+              </div>
+
+              <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex flex-col">
+                <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">Completed</span>
+                <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">{completedRequests.length}</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
       {/* ─── 2. REVENUE CHART & OUT OF STOCK ─── */}
       <div className="grid gap-6 lg:grid-cols-12">
-        {/* Revenue Overview */}
+        {/* Revenue Overview Chart */}
         <Card className="lg:col-span-8 bg-card border-border shadow-sm overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
               <CardTitle className="text-base font-bold">Revenue Overview</CardTitle>
-              <CardDescription className="text-xs">Monthly earnings by category</CardDescription>
+              <CardDescription className="text-xs">Monthly earnings breakdown</CardDescription>
             </div>
             <Badge variant="outline" className="font-semibold text-[10px] uppercase tracking-wider">MTD Analysis</Badge>
           </CardHeader>
@@ -238,32 +351,51 @@ export default function OwnerDashboard() {
                 <CardTitle className="text-sm font-bold">Out of Stock</CardTitle>
               </div>
               <Badge variant="secondary" className="h-5 text-[10px] font-bold">
-                {outOfStockItems.length || "2"}
+                {outOfStockItems.length}
               </Badge>
             </div>
             <CardDescription className="text-xs">Items hidden from guest catalog</CardDescription>
           </CardHeader>
+
           <CardContent className="p-0 flex-1 overflow-y-auto max-h-[280px]">
-            <div className="divide-y divide-border/60">
-              {(outOfStockItems.length > 0 ? outOfStockItems : fakeOutofStock).map((item: any) => (
-                <div key={item.id} className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors">
-                  <div className="flex flex-col min-w-0 pr-2">
-                    <span className="text-xs font-bold text-foreground truncate">{item.name}</span>
-                    <span className="text-[10px] font-medium text-muted-foreground">{item.category_name || "Catalog"}</span>
-                  </div>
-                  <Button size="sm" variant="outline" className="h-7 text-xs font-semibold px-3">
-                    Restock
-                  </Button>
-                </div>
-              ))}
-            </div>
+            {outOfStockItems.length === 0 ? (
+              <div className="p-6 text-center text-xs text-muted-foreground flex flex-col items-center justify-center h-full">
+                <CheckCircle2 className="w-8 h-8 text-emerald-500/40 mb-2" />
+                All catalog items are currently available!
+              </div>
+            ) : (
+              <div className="divide-y divide-border/60">
+                {outOfStockItems.map((item) => {
+                  const key = `${item.item_type}-${item.id}`;
+                  const isRestocking = restockingId === key;
+
+                  return (
+                    <div key={key} className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors">
+                      <div className="flex flex-col min-w-0 pr-2">
+                        <span className="text-xs font-bold text-foreground truncate">{item.name}</span>
+                        <span className="text-[10px] font-medium text-muted-foreground">{item.cat_name}</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isRestocking}
+                        onClick={() => handleRestock(item)}
+                        className="h-7 text-xs font-semibold px-3 shrink-0"
+                      >
+                        {isRestocking ? <RefreshCw className="w-3 h-3 animate-spin" /> : "Restock"}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* ─── 3. ACTIVITY FEED & DAILY REVENUE ─── */}
+      {/* ─── 3. RECENT ACTIVITY & DAILY REVENUE ─── */}
       <div className="grid gap-6 lg:grid-cols-12">
-        {/* Activity & Notifications Feed */}
+        {/* Unified Activity & Notifications Feed */}
         <Card className="lg:col-span-6 bg-card border-border shadow-sm overflow-hidden flex flex-col">
           <CardHeader className="border-b border-border/60 pb-3 flex flex-row items-center justify-between">
             <div className="flex items-center gap-2 text-foreground">
@@ -275,31 +407,33 @@ export default function OwnerDashboard() {
             </Link>
           </CardHeader>
           <CardContent className="p-0 flex-1 overflow-y-auto max-h-[360px]">
-            <div className="divide-y divide-border/60">
-              {fakeNotifications.map((notif) => (
-                <div key={notif.id} className="flex items-start gap-3 px-5 py-3.5 hover:bg-muted/20 transition-colors">
-                  {/* Clean contextual icons instead of solid green vertical bars */}
-                  <div className="p-2 rounded-lg bg-muted/50 text-foreground shrink-0 mt-0.5">
-                    {notif.type === "order" && <ShoppingBag className="w-3.5 h-3.5 text-blue-500" />}
-                    {notif.type === "stock_out" && <PackageX className="w-3.5 h-3.5 text-amber-500" />}
-                    {notif.type === "stock_in" && <PackageCheck className="w-3.5 h-3.5 text-emerald-500" />}
-                    {notif.type === "completed" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <p className="text-xs font-bold text-foreground">{notif.title}</p>
-                      <span className="text-[10px] font-medium text-muted-foreground">{notif.time}</span>
+            {activityNotifications.length === 0 ? (
+              <div className="p-8 text-center text-xs text-muted-foreground">No recent activity found.</div>
+            ) : (
+              <div className="divide-y divide-border/60">
+                {activityNotifications.map((notif) => (
+                  <div key={notif.id} className="flex items-start gap-3 px-5 py-3.5 hover:bg-muted/20 transition-colors">
+                    <div className="p-2 rounded-lg bg-muted/50 text-foreground shrink-0 mt-0.5">
+                      {notif.type === "order" && <ShoppingBag className="w-3.5 h-3.5 text-blue-500" />}
+                      {notif.type === "stock_out" && <PackageX className="w-3.5 h-3.5 text-amber-500" />}
+                      {notif.type === "completed" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
                     </div>
-                    <p className="text-xs text-muted-foreground leading-snug">{notif.description}</p>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <p className="text-xs font-bold text-foreground">{notif.title}</p>
+                        <span className="text-[10px] font-medium text-muted-foreground">{notif.time}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-snug">{notif.description}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Daily Revenue Breakdown */}
+        {/* Daily Revenue Log */}
         <Card className="lg:col-span-6 bg-card border-border shadow-sm overflow-hidden flex flex-col">
           <CardHeader className="border-b border-border/60 pb-3 flex flex-row items-center justify-between">
             <div className="flex items-center gap-2 text-foreground">
@@ -320,7 +454,7 @@ export default function OwnerDashboard() {
                   <div className="space-y-1 flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
-                        {day.date}
+                        {day.dateLabel}
                       </p>
                       <span className="text-[10px] font-medium px-1.5 py-0.5 bg-muted rounded text-muted-foreground">
                         {day.orders} Orders
@@ -354,11 +488,11 @@ export default function OwnerDashboard() {
             </div>
           </CardContent>
 
-          {/* Clean Navigation link to History page */}
+          {/* Direct Navigation to History Page */}
           <CardFooter className="p-2.5 border-t border-border/60 bg-muted/20">
             <Button asChild variant="ghost" className="w-full text-xs font-semibold hover:bg-muted h-8">
               <Link href="/dashboard/history" className="flex items-center justify-center gap-1 text-muted-foreground hover:text-foreground">
-                View Full History <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                View Full History <ChevronRight className="w-3.5 h-3.5 ml-1" />
               </Link>
             </Button>
           </CardFooter>
@@ -366,4 +500,4 @@ export default function OwnerDashboard() {
       </div>
     </div>
   );
-}
+} 

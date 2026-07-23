@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Service extends Model
 {
+    use HasFactory;
     protected $fillable = ['riad_id', 'category_id', 'name', 'description', 'price', 'is_available', 'requires_quantity'];
 
     protected $casts = [

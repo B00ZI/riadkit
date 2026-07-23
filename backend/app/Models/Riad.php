@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Riad extends Model
 {
+    use HasFactory;
+
     protected $guarded = []; // Allow mass assignment for all fields
 
     public function users()

@@ -110,7 +110,8 @@ export default function OrderHistory() {
 
   // ─── Unique room numbers from data ─────────────────────────
   const roomOptions = useMemo(() => {
-    return rooms.map((room) => room.room_number).sort();
+    const uniqueRooms = Array.from(new Set(rooms.map((room) => room.room_number)));
+    return uniqueRooms.sort();
   }, [rooms]);
 
   // ─── Filtered Data ─────────────────────────────────────────
@@ -264,8 +265,8 @@ export default function OrderHistory() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All rooms</SelectItem>
-                {roomOptions.map((room) => (
-                  <SelectItem key={room} value={room}>
+                {roomOptions.map((room, index) => (
+                  <SelectItem key={`${room}-${index}`} value={room}>
                     {room}
                   </SelectItem>
                 ))}
