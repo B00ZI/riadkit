@@ -1,183 +1,96 @@
 "use client";
 
-import { Service } from "@/hooks/useCatalog";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Plus,
-  Pencil,
-  Trash2,
-  CheckCircle2,
-  XCircle,
-  Sparkles,
-  Loader2,
-} from "lucide-react";
-import { useState } from "react";
+import { Sparkles, ShoppingBag, Wifi, Coffee, Bath, Droplets, Snowflake, Bell, Scissors, Dumbbell } from "lucide-react";
+import { EmptyState } from "./EmptyState";
+
+interface Service {
+  id: string;
+  name: string;
+  price: number;
+  is_available?: boolean;
+  icon?: string; // optional icon name if we want to customise
+}
 
 interface ServicesTabProps {
   services: Service[];
-  onOpenDialog: (service?: Service) => void;
-  onDelete: (id: number, name: string) => void;
-  onToggleAvailability?: (id: number, currentStatus: boolean) => Promise<void>;
+  isExpired: boolean;
+  onRequestItem: (item: Service & { requestType: string }) => void;
 }
 
-export function ServicesTab({
-  services,
-  onOpenDialog,
-  onDelete,
-  onToggleAvailability,
-}: ServicesTabProps) {
-  const [togglingId, setTogglingId] = useState<number | null>(null);
+// Map service names to icons (you can expand this)
+const getServiceIcon = (name: string) => {
+  const lower = name.toLowerCase();
+  if (lower.includes("wifi")) return Wifi;
+  if (lower.includes("coffee") || lower.includes("tea")) return Coffee;
+  if (lower.includes("bath") || lower.includes("shower")) return Bath;
+  if (lower.includes("water") || lower.includes("drink")) return Droplets;
+  if (lower.includes("air")) return Snowflake;
+  if (lower.includes("bell") || lower.includes("concierge")) return Bell;
+  if (lower.includes("hair") || lower.includes("barber")) return Scissors;
+  if (lower.includes("gym") || lower.includes("fitness")) return Dumbbell;
+  return ShoppingBag; // default
+};
 
-  const handleToggleStock = async (svc: Service) => {
-    if (!onToggleAvailability) return;
-    setTogglingId(svc.id);
-    try {
-      const currentStatus = svc.is_available ?? true;
-      await onToggleAvailability(svc.id, !currentStatus);
-    } catch (err) {
-      console.error("Failed to toggle service availability", err);
-    } finally {
-      setTogglingId(null);
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between px-1">
-        <div>
-          <h3 className="text-sm font-black uppercase tracking-wider text-foreground">
-            Room Services
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            In-room amenities, housekeeping, and special requests
-          </p>
-        </div>
-        <Button
-          size="sm"
-          className="h-9 text-xs font-black uppercase tracking-wide px-4"
-          onClick={() => onOpenDialog()}
-        >
-          <Plus className="w-3.5 h-3.5 mr-1.5" /> Add Service
-        </Button>
-      </div>
-
-      {services.length === 0 ? (
-        <Card className="p-12 border-dashed bg-card/50 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
-          <Sparkles className="w-10 h-10 text-muted-foreground/40" />
-          <div>
-            <p className="text-sm font-bold text-foreground">No services configured</p>
-            <p className="text-xs">
-              Add services for your guests (e.g., Extra Towels, Room Cleaning, Airport Shuttle).
-            </p>
-          </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onOpenDialog()}
-            className="mt-2 text-xs font-black uppercase"
-          >
-            <Plus className="w-3.5 h-3.5 mr-1.5" /> Create Service
-          </Button>
-        </Card>
-      ) : (
-        <div className="grid gap-3">
-          {services.map((svc) => {
-            const isAvailable = svc.is_available ?? true;
-            const isToggling = togglingId === svc.id;
-
-            return (
-              <Card
-                key={svc.id}
-                className={`p-4 bg-card border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                  isAvailable
-                    ? "border-border/80 hover:border-primary/40 shadow-2xs"
-                    : "border-border/40 bg-muted/20 opacity-75"
-                }`}
-              >
-                {/* Left Section: Info */}
-                <div className="space-y-1.5 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-black text-sm uppercase tracking-tight text-foreground truncate">
-                      {svc.name}
-                    </span>
-                    {!isAvailable && (
-                      <Badge variant="destructive" className="text-[9px] font-black uppercase px-1.5 py-0">
-                        Unavailable
-                      </Badge>
-                    )}
-                    <Badge variant="outline" className="text-[9px] font-extrabold uppercase px-2 py-0">
-                      {svc.requires_quantity ? "Qty Selector" : "Single Request"}
-                    </Badge>
-                  </div>
-
-                  <p className="text-xs font-bold text-muted-foreground">
-                    {svc.price ? (
-                      <span className="text-primary font-black">{svc.price} MAD</span>
-                    ) : (
-                      <span className="text-emerald-600 dark:text-emerald-400 font-black">
-                        Complimentary
-                      </span>
-                    )}
-                  </p>
-                </div>
-
-                {/* Right Section: Actions */}
-                <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-border/50">
-                  {/* Stock/Availability Toggle */}
-                  <Button
-                    size="sm"
-                    variant={isAvailable ? "outline" : "secondary"}
-                    disabled={isToggling}
-                    onClick={() => handleToggleStock(svc)}
-                    className={`h-8 text-[11px] font-black uppercase px-2.5 ${
-                      isAvailable
-                        ? "hover:bg-amber-50 hover:text-amber-600 hover:border-amber-300 dark:hover:bg-amber-950/30"
-                        : "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400"
-                    }`}
-                  >
-                    {isToggling ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                    ) : isAvailable ? (
-                      <>
-                        <XCircle className="w-3.5 h-3.5 mr-1 text-amber-500" /> Disable
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-600" /> Enable
-                      </>
-                    )}
-                  </Button>
-
-                  {/* Edit Button */}
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => onOpenDialog(svc)}
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
-                    title="Edit Service"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </Button>
-
-                  {/* Delete Button */}
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => onDelete(svc.id, svc.name)}
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:border-destructive/50 hover:bg-destructive/10"
-                    title="Delete Service"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+export const ServicesTab = ({ services, isExpired, onRequestItem }: ServicesTabProps) => (
+  <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300 py-5 px-6 space-y-4">
+    <div>
+      <h2 className="text-xl font-black uppercase tracking-tight">Room Services</h2>
+      <p className="text-xs text-muted-foreground font-medium">Housekeeping, extra amenities, and special requests</p>
     </div>
-  );
-}
+
+    {services.length === 0 ? (
+      <EmptyState
+        icon={Sparkles}
+        title="No Services Listed"
+        message="Need anything for your room? Chat directly with front desk reception."
+      />
+    ) : (
+      <div className="grid gap-4">
+        {services.map((item) => {
+          const isAvailable = item.is_available ?? true;
+          const Icon = getServiceIcon(item.name);
+
+          return (
+            <Card
+              key={item.id}
+              className={`overflow-hidden border-border/80 bg-card rounded-2xl shadow-sm transition-all ${
+                !isAvailable
+                  ? "opacity-60 bg-muted/20"
+                  : "hover:border-primary/20"
+              }`}
+            >
+              <div className="p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-primary/5 text-primary rounded-xl border border-primary/10 shrink-0">
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-black text-base uppercase tracking-tight text-foreground">
+                      {item.name}
+                    </p>
+                  </div>
+                  <div className="shrink-0">
+                    <span className="text-sm font-bold text-primary bg-primary/5 px-3 py-1 rounded-full border border-primary/10">
+                      {item.price > 0 ? `${item.price} MAD` : "Free"}
+                    </span>
+                  </div>
+                </div>
+
+                <Button
+                  disabled={!isAvailable || isExpired}
+                  onClick={() => onRequestItem({ ...item, requestType: "service" })}
+                  variant="outline"
+                  className="w-full h-9 text-xs font-medium uppercase tracking-wider rounded-xl border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 transition-all"
+                >
+                  {isAvailable ? "Request" : "Unavailable"}
+                </Button>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    )}
+  </div>
+);

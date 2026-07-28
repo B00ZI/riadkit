@@ -1,237 +1,159 @@
 "use client";
 
-import { MenuItem, Category } from "@/hooks/useCatalog";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
-import {
-  GripVertical,
-  Plus,
-  Pencil,
-  Trash2,
-  CheckCircle2,
-  XCircle,
-  UtensilsCrossed,
-  Loader2,
-} from "lucide-react";
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Utensils } from "lucide-react";
+import { EmptyState } from "./EmptyState";
 
-interface MenuTabProps {
-  categories: Category[];
-  menuItems: MenuItem[];
-  onOpenCategoryDialog: () => void;
-  onOpenItemDialog: (item?: MenuItem, categoryId?: number) => void;
-  onDeleteCategory: (id: number, name: string) => void;
-  onDeleteMenuItem: (id: number, name: string) => void;
-  onToggleAvailability?: (id: number, currentStatus: boolean) => Promise<void>;
+interface MenuItem {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  is_available?: boolean;
+  requires_quantity?: boolean;
 }
 
-export function MenuTab({
-  categories,
-  menuItems,
-  onOpenCategoryDialog,
-  onOpenItemDialog,
-  onDeleteCategory,
-  onDeleteMenuItem,
-  onToggleAvailability,
-}: MenuTabProps) {
-  const [togglingId, setTogglingId] = useState<number | null>(null);
+interface MenuCategory {
+  id: string;
+  name: string;
+  menu_items: MenuItem[];
+}
 
-  const menuCategories = categories.filter((c) => c.type === "menu");
+interface MenuTabProps {
+  categories: MenuCategory[];
+  isExpired: boolean;
+  onRequestItem: (item: MenuItem & { requestType: string }) => void;
+}
 
-  const handleToggleStock = async (item: MenuItem) => {
-    if (!onToggleAvailability) return;
-    setTogglingId(item.id);
-    try {
-      await onToggleAvailability(item.id, !item.is_available);
-    } catch (err) {
-      console.error("Failed to toggle availability", err);
-    } finally {
-      setTogglingId(null);
-    }
-  };
+export const MenuTab = ({ categories, isExpired, onRequestItem }: MenuTabProps) => {
+  const [filter, setFilter] = useState("All");
+
+  const filteredCategories = useMemo(() => {
+    if (filter === "All") return categories;
+    return categories.filter((cat) => cat.name === filter);
+  }, [categories, filter]);
+
+  if (categories.length === 0) {
+    return (
+      <EmptyState
+        icon={Utensils}
+        title="Kitchen Closed"
+        message="Our kitchen menu is currently being updated. Contact reception for direct requests."
+      />
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between px-1">
-        <div>
-          <h3 className="text-sm font-black uppercase tracking-wider text-foreground">
-            Menu Categories
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            Manage your food, drinks, and dining offerings
-          </p>
-        </div>
-        <Button
-          size="sm"
-          className="h-9 text-xs font-black uppercase tracking-wide px-4"
-          onClick={onOpenCategoryDialog}
-        >
-          <Plus className="w-3.5 h-3.5 mr-1.5" /> Add Category
-        </Button>
+    <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300 py-5">
+      <div className="px-6 mb-4">
+        <h2 className="text-xl font-black uppercase tracking-tight">In-Room Dining</h2>
+        <p className="text-xs text-muted-foreground font-medium">Freshly prepared local delicacies & drinks</p>
       </div>
 
-      {menuCategories.length === 0 ? (
-        <Card className="p-12 border-dashed bg-card/50 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
-          <UtensilsCrossed className="w-10 h-10 text-muted-foreground/40" />
-          <div>
-            <p className="text-sm font-bold text-foreground">No menu categories yet</p>
-            <p className="text-xs">Create your first category (e.g., Breakfast, Drinks) to get started.</p>
-          </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={onOpenCategoryDialog}
-            className="mt-2 text-xs font-black uppercase"
+      {/* Category filter */}
+      <div className="w-full overflow-x-auto no-scrollbar px-6 mb-5">
+        <div className="flex gap-2 w-max">
+          <Badge
+            onClick={() => setFilter("All")}
+            variant={filter === "All" ? "default" : "outline"}
+            className={`px-4 py-1.5 font-black uppercase text-[10px] rounded-xl cursor-pointer transition-all ${
+              filter === "All" ? "shadow-sm" : "text-muted-foreground hover:bg-muted"
+            }`}
           >
-            <Plus className="w-3.5 h-3.5 mr-1.5" /> Create Category
-          </Button>
-        </Card>
-      ) : (
-        menuCategories.map((cat) => {
-          const items = menuItems.filter((i) => i.category_id === cat.id);
+            All Items
+          </Badge>
+          {categories.map((cat) => (
+            <Badge
+              key={cat.id}
+              onClick={() => setFilter(cat.name)}
+              variant={filter === cat.name ? "default" : "outline"}
+              className={`px-4 py-1.5 font-black uppercase text-[10px] rounded-xl cursor-pointer transition-all ${
+                filter === cat.name ? "shadow-sm" : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              {cat.name}
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      {/* Menu items */}
+      <div className="px-6 space-y-6">
+        {filteredCategories.map((cat) => {
+          const items = cat.menu_items ?? [];
+          if (items.length === 0) return null;
 
           return (
-            <Card key={cat.id} className="bg-card border-border shadow-sm overflow-hidden">
-              {/* Category Header */}
-              <div className="flex items-center justify-between px-4 py-3 bg-muted/40 border-b border-border">
-                <div className="flex items-center gap-2.5">
-                  <GripVertical className="w-4 h-4 text-muted-foreground/40 cursor-grab" />
-                  <span className="font-black text-sm uppercase tracking-tight text-foreground">
-                    {cat.name}
-                  </span>
-                  <Badge variant="secondary" className="text-[10px] font-extrabold px-2 py-0.5">
-                    {items.length} {items.length === 1 ? "item" : "items"}
-                  </Badge>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDeleteCategory(cat.id, cat.name)}
-                    className="h-8 text-xs font-bold text-muted-foreground hover:text-destructive hover:bg-destructive/10 px-2.5"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete Category
-                  </Button>
-                </div>
+            <div key={cat.id} className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  {cat.name}
+                </span>
+                <div className="h-px bg-border/60 flex-1" />
               </div>
 
-              {/* Items List */}
-              <div className="p-3 space-y-2">
-                {items.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-muted-foreground border border-dashed rounded-lg bg-muted/10">
-                    No items in this category yet.
-                  </div>
-                ) : (
-                  items.map((item) => {
-                    const isAvailable = item.is_available ?? true;
-                    const isToggling = togglingId === item.id;
+              <div className="grid gap-4">
+                {items.map((item) => {
+                  const isAvailable = item.is_available ?? true;
 
-                    return (
-                      <div
-                        key={item.id}
-                        className={`flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-lg border transition-all gap-3 ${
-                          isAvailable
-                            ? "bg-card border-border/80 hover:border-primary/40 shadow-2xs"
-                            : "bg-muted/20 border-border/40 opacity-70"
-                        }`}
-                      >
-                        {/* Item Info */}
-                        <div className="flex items-start gap-3 min-w-0">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-bold text-foreground truncate">
+                  return (
+                    <Card
+                      key={item.id}
+                      className={`overflow-hidden border-border/80 bg-card rounded-2xl shadow-sm transition-all ${
+                        !isAvailable
+                          ? "opacity-60 bg-muted/20"
+                          : "hover:border-primary/20"
+                      }`}
+                    >
+                      <div className="p-4 space-y-3">
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="space-y-1 flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-black text-base uppercase tracking-tight text-foreground">
                                 {item.name}
                               </span>
                               {!isAvailable && (
-                                <Badge variant="destructive" className="text-[9px] font-black uppercase px-1.5 py-0">
-                                  Out of stock
+                                <Badge
+                                  variant="destructive"
+                                  className="text-[8px] font-black px-1.5 py-0 uppercase"
+                                >
+                                  Sold Out
                                 </Badge>
                               )}
                             </div>
                             {item.description && (
-                              <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
                                 {item.description}
                               </p>
                             )}
                           </div>
-                        </div>
-
-                        {/* Right Actions & Price Row */}
-                        <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-border/50">
-                          <span className="text-sm font-black text-primary bg-primary/10 px-2.5 py-1 rounded-md">
-                            {item.price} MAD
-                          </span>
-
-                          <div className="flex items-center gap-1.5">
-                            {/* Stock Toggle Button */}
-                            <Button
-                              size="sm"
-                              variant={isAvailable ? "outline" : "secondary"}
-                              disabled={isToggling}
-                              onClick={() => handleToggleStock(item)}
-                              className={`h-8 text-[11px] font-black uppercase px-2.5 ${
-                                isAvailable
-                                  ? "hover:bg-amber-50 hover:text-amber-600 hover:border-amber-300 dark:hover:bg-amber-950/30"
-                                  : "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400"
-                              }`}
-                            >
-                              {isToggling ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : isAvailable ? (
-                                <>
-                                  <XCircle className="w-3.5 h-3.5 mr-1 text-amber-500" /> Mark Out
-                                </>
-                              ) : (
-                                <>
-                                  <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-600" /> Restock
-                                </>
-                              )}
-                            </Button>
-
-                            {/* Edit Button */}
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => onOpenItemDialog(item)}
-                              className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
-                              title="Edit item"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </Button>
-
-                            {/* Delete Button */}
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => onDeleteMenuItem(item.id, item.name)}
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:border-destructive/50 hover:bg-destructive/10"
-                              title="Delete item"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
+                          <div className="shrink-0">
+                            <span className="text-sm font-bold text-primary bg-primary/5 px-3 py-1 rounded-full border border-primary/10">
+                              {item.price} MAD
+                            </span>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })
-                )}
 
-                {/* Add Item Button */}
-                <Button
-                  variant="outline"
-                  className="w-full h-9 border-dashed text-xs font-black uppercase mt-3 hover:border-primary hover:text-primary transition-colors"
-                  onClick={() => onOpenItemDialog(undefined, cat.id)}
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1.5" /> Add item to {cat.name}
-                </Button>
+                        <Button
+                          disabled={!isAvailable || isExpired}
+                          onClick={() => onRequestItem({ ...item, requestType: "menu" })}
+                          variant="outline"
+                          className="w-full h-9 text-xs font-medium uppercase tracking-wider rounded-xl border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 transition-all"
+                        >
+                          {isAvailable ? "Add" : "Unavailable"}
+                        </Button>
+                      </div>
+                    </Card>
+                  );
+                })}
               </div>
-            </Card>
+            </div>
           );
-        })
-      )}
+        })}
+      </div>
     </div>
   );
-}
+};

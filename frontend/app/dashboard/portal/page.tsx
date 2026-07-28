@@ -9,11 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
 // Tab components
-import { SettingsTab } from "@/components/guest-portal/SettingsTab";
-import { MenuTab } from "@/components/guest-portal/MenuTab";
-import { ExcursionsTab } from "@/components/guest-portal/ExcursionsTab";
-import { ServicesTab } from "@/components/guest-portal/ServicesTab";
-import { PhonePreview } from "@/components/guest-portal/PhonePreview";
+import { SettingsTab } from "@/components/manage-riad/SettingsTab";
+import { MenuTab } from "@/components/manage-riad/MenuTab";
+import { ExcursionsTab } from "@/components/manage-riad/ExcursionsTab";
+import { ServicesTab } from "@/components/manage-riad/ServicesTab";
+import { PhonePreview } from "@/components/manage-riad/PhonePreview";
 
 // Dialogs
 import {
