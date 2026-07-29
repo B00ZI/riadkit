@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User; // � Add this import!
 use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {

@@ -5,13 +5,14 @@ use App\Http\Controllers\Api\ExcursionController;
 use App\Http\Controllers\Api\GuestRequestController;
 use App\Http\Controllers\Api\MenuItemController;
 use App\Http\Controllers\Api\ServiceController;
+use App\Http\Controllers\Api\StaffController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GuestPortalController;
 use App\Http\Controllers\ReceptionController;
-use App\Http\Controllers\Api\StaffController;
 use App\Http\Controllers\RiadController;
 use App\Http\Controllers\RoomController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
 // ─── Public Routes ──────────────────────────────────────────
@@ -24,6 +25,9 @@ Route::post('/guest/requests', [GuestRequestController::class, 'store']);
 
 // ─── Protected Routes (auth required, both owner and receptionist) ──
 Route::middleware('auth:sanctum')->group(function () {
+
+    // ✅ FIXED: Explicitly register broadcasting routes with auth:sanctum middleware
+    Broadcast::routes(['middleware' => ['auth:sanctum']]);
 
     // User info
     Route::get('/user', function (Request $request) {
@@ -42,10 +46,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Requests (view and update status)
     Route::get('/requests', [GuestRequestController::class, 'index']);
-    Route::patch('/requests/{id}', [GuestRequestController::class, 'update']); // keep as is
+    Route::patch('/requests/{id}', [GuestRequestController::class, 'update']);
 
-    // ─── Catalog: GET & PUT (both roles) ──────────────────
-    // GET for all catalog resources (now with model binding)
+    // Catalog: GET & PUT
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/categories/{category}', [CategoryController::class, 'show']);
 
@@ -58,7 +61,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/excursions', [ExcursionController::class, 'index']);
     Route::get('/excursions/{excursion}', [ExcursionController::class, 'show']);
 
-    // PUT (toggle availability) – allow both owner and receptionist
     Route::put('/menu-items/{menuItem}', [MenuItemController::class, 'update']);
     Route::put('/services/{service}', [ServiceController::class, 'update']);
     Route::put('/excursions/{excursion}', [ExcursionController::class, 'update']);
@@ -66,34 +68,25 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // ─── Owner‑Only Routes ──────────────────────────────────────
 Route::middleware(['auth:sanctum', 'role:owner'])->group(function () {
-
-    // Riad settings (update)
     Route::put('/settings', [RiadController::class, 'update']);
 
-    // Rooms (create, update, delete) – now using {room}
     Route::post('/rooms', [RoomController::class, 'store']);
     Route::put('/rooms/{room}', [RoomController::class, 'update']);
     Route::delete('/rooms/{room}', [RoomController::class, 'destroy']);
 
-    // ─── Catalog: POST, DELETE (owner only) ──────────────
-    // Categories
     Route::post('/categories', [CategoryController::class, 'store']);
     Route::put('/categories/{category}', [CategoryController::class, 'update']);
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy']);
 
-    // Menu-items (POST and DELETE only; PUT is already outside)
     Route::post('/menu-items', [MenuItemController::class, 'store']);
     Route::delete('/menu-items/{menuItem}', [MenuItemController::class, 'destroy']);
 
-    // Services (POST, DELETE; PUT is outside)
     Route::post('/services', [ServiceController::class, 'store']);
     Route::delete('/services/{service}', [ServiceController::class, 'destroy']);
 
-    // Excursions (POST, DELETE; PUT is outside)
     Route::post('/excursions', [ExcursionController::class, 'store']);
     Route::delete('/excursions/{excursion}', [ExcursionController::class, 'destroy']);
 
-    // Staff management
     Route::prefix('staff')->group(function () {
         Route::get('/', [StaffController::class, 'index']);
         Route::post('/', [StaffController::class, 'store']);
