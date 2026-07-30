@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewNotification;
+use App\Events\RoomStatusUpdated;
+use App\Models\Notification;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -17,12 +20,30 @@ class ReceptionController extends Controller
 
         $room->update([
             'status' => 'occupied',
-            'current_session_id' => Str::random(16), 
+            'current_session_id' => Str::random(16),
             'session_status' => 'active',
+            'checked_in_at' => now(),
         ]);
 
         // Refresh comes AFTER update to fix stale data
         $room->refresh();
+
+        // ⚡ BROADCAST: Notify WebSocket listeners of room status change
+        RoomStatusUpdated::dispatch($room);
+
+        // Notification
+        $notification = Notification::create([
+            'riad_id' => $room->riad_id,
+            'type' => 'guest_checked_in',
+            'title' => 'Guest Checked In',
+            'description' => "Room {$room->room_number} — guest checked in.",
+            'data' => [
+                'entity_type' => 'room',
+                'entity_id' => $room->id,
+                'room_number' => $room->room_number,
+            ],
+        ]);
+        NewNotification::dispatch($notification);
 
         return response()->json([
             'message' => 'Checked in successfully',
@@ -44,6 +65,23 @@ class ReceptionController extends Controller
 
         // Refresh comes AFTER update to fix stale data
         $room->refresh();
+
+        // ⚡ BROADCAST: Notify WebSocket listeners of room status change
+        RoomStatusUpdated::dispatch($room);
+
+        // Notification
+        $notification = Notification::create([
+            'riad_id' => $room->riad_id,
+            'type' => 'guest_checked_out',
+            'title' => 'Guest Checked Out',
+            'description' => "Room {$room->room_number} — guest checked out.",
+            'data' => [
+                'entity_type' => 'room',
+                'entity_id' => $room->id,
+                'room_number' => $room->room_number,
+            ],
+        ]);
+        NewNotification::dispatch($notification);
 
         return response()->json([
             'message' => 'Checked out successfully',

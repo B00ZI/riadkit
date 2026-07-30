@@ -7,6 +7,7 @@ use App\Models\Room;
 use App\Models\Category;
 use App\Models\Service;
 use App\Models\Excursion;
+use App\Models\HouseRule;
 use Illuminate\Http\Request;
 
 class GuestPortalController extends Controller
@@ -39,12 +40,21 @@ class GuestPortalController extends Controller
             ->where('is_available', true)
             ->get();
 
+        $houseRules = HouseRule::where('riad_id', $riad->id)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
+
         $payload = [
             'room_id' => $room->id,
             'room_number' => $room->room_number,
             'riad' => [
                 'name' => $riad->name,
                 'logoUrl' => $riad->logoUrl,
+                'logo_url' => $riad->logo_url,
+                'logo_public_id' => $riad->logo_public_id,
+                'cover_image_url' => $riad->cover_image_url,
+                'cover_image_public_id' => $riad->cover_image_public_id,
                 'description' => $riad->description,
                 'wifiName' => $riad->wifiName,
                 'wifiPassword' => $riad->wifiPassword,
@@ -55,6 +65,7 @@ class GuestPortalController extends Controller
             'menu' => $menu,
             'services' => $services,
             'excursions' => $excursions,
+            'house_rules' => $houseRules,
         ];
 
         $clientSessionId = $request->query('session_id');

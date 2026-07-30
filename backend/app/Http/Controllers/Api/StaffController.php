@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\NewNotification;
 use App\Http\Controllers\Controller;
+use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -42,6 +44,20 @@ class StaffController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
         ]);
+
+        // Notification
+        $notification = Notification::create([
+            'riad_id' => $request->user()->riad_id,
+            'type' => 'staff_created',
+            'title' => 'New Staff Member Added',
+            'description' => "{$validated['name']} has been added as staff.",
+            'data' => [
+                'entity_type' => 'staff',
+                'entity_id' => $user->id,
+                'name' => $validated['name'],
+            ],
+        ]);
+        NewNotification::dispatch($notification);
 
         return response()->json([
             'message' => 'Staff member created successfully',
@@ -85,6 +101,20 @@ class StaffController extends Controller
 
         $staff->save();
 
+        // Notification
+        $notification = Notification::create([
+            'riad_id' => $request->user()->riad_id,
+            'type' => 'staff_updated',
+            'title' => 'Staff Member Updated',
+            'description' => "{$staff->name}'s details have been updated.",
+            'data' => [
+                'entity_type' => 'staff',
+                'entity_id' => $staff->id,
+                'name' => $staff->name,
+            ],
+        ]);
+        NewNotification::dispatch($notification);
+
         return response()->json([
             'message' => 'Staff member updated successfully',
             'user' => $staff->only('id', 'name', 'email', 'role'),
@@ -109,7 +139,22 @@ class StaffController extends Controller
             ], 403);
         }
 
+        $name = $staff->name;
         $staff->delete(); // or $staff->forceDelete() if no soft deletes
+
+        // Notification
+        $notification = Notification::create([
+            'riad_id' => $request->user()->riad_id,
+            'type' => 'staff_deleted',
+            'title' => 'Staff Member Removed',
+            'description' => "{$name} has been removed from staff.",
+            'data' => [
+                'entity_type' => 'staff',
+                'entity_id' => null,
+                'name' => $name,
+            ],
+        ]);
+        NewNotification::dispatch($notification);
 
         return response()->json([
             'message' => 'Staff member deleted successfully'

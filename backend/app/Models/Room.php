@@ -10,16 +10,14 @@ class Room extends Model
 {
     use HasFactory;
 
-    protected $guarded = []; // Allow mass assignment
+    protected $fillable = [
+        'riad_id', 'room_number', 'type', 'qr_token', 'status',
+        'session_status', 'current_session_id', 'checked_in_at',
+    ];
 
     public function riad()
     {
         return $this->belongsTo(Riad::class);
-    }
-
-    public function sessions()
-    {
-        return $this->hasMany(GuestSession::class);
     }
 
     public function guestRequests(): HasMany

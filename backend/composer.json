@@ -7,13 +7,15 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
-        "knuckleswtf/scribe": "^5.11",
+        "cloudinary/cloudinary_php": "^3.1",
         "laravel/framework": "^13.8",
         "laravel/reverb": "^1.0",
         "laravel/sanctum": "^4.0",
-        "laravel/tinker": "^3.0"
+        "spatie/browsershot": "^5.4"
     },
     "require-dev": {
+        "knuckleswtf/scribe": "^5.11",
+        "laravel/tinker": "^3.0",
         "fakerphp/faker": "^1.23",
         "laravel/pail": "^1.2.5",
         "laravel/pao": "^1.0.6",

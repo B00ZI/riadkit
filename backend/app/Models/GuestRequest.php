@@ -16,9 +16,19 @@ class GuestRequest extends Model
         'session_id',
         'type',
         'item_id',
+        'item_name',
+        'unit_price',
         'quantity',
+        'total_price',
         'notes',
         'status',
+        'completed_at',
+    ];
+
+    protected $casts = [
+        'unit_price' => 'decimal:2',
+        'total_price' => 'decimal:2',
+        'completed_at' => 'datetime',
     ];
 
     public function riad(): BelongsTo

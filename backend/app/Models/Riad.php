@@ -10,7 +10,20 @@ class Riad extends Model
 {
     use HasFactory;
 
-    protected $guarded = []; // Allow mass assignment for all fields
+    protected $fillable = [
+        'name', 'subdomain', 'logoUrl', 'logo_url', 'logo_public_id',
+        'cover_image_url', 'cover_image_public_id', 'description',
+        'wifiName', 'wifiPassword', 'whatsappNumber', 'currency',
+        'instagramUrl',
+    ];
+
+    protected $casts = [
+        'logoUrl' => 'string',
+        'logo_url' => 'string',
+        'logo_public_id' => 'string',
+        'cover_image_url' => 'string',
+        'cover_image_public_id' => 'string',
+    ];
 
     public function users()
     {
@@ -45,5 +58,10 @@ class Riad extends Model
     public function guestRequests(): HasMany
     {
         return $this->hasMany(GuestRequest::class);
+    }
+
+    public function houseRules(): HasMany
+    {
+        return $this->hasMany(HouseRule::class)->orderBy('sort_order');
     }
 }

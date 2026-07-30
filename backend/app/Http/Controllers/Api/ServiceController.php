@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\ItemAvailabilityChanged;
+use App\Events\NewNotification;
 use App\Http\Controllers\Controller;
+use App\Models\Notification;
 use App\Models\Service;
 use Illuminate\Http\Request;
 
@@ -38,6 +41,20 @@ class ServiceController extends Controller
         $validated['riad_id'] = $request->user()->riad_id;
         $service = Service::create($validated);
 
+        // Notification
+        $notification = Notification::create([
+            'riad_id' => $request->user()->riad_id,
+            'type' => 'service_created',
+            'title' => 'New Service Added',
+            'description' => "{$service->name} is now available.",
+            'data' => [
+                'entity_type' => 'service',
+                'entity_id' => $service->id,
+                'name' => $service->name,
+            ],
+        ]);
+        NewNotification::dispatch($notification);
+
         return response()->json($service, 201);
     }
 
@@ -63,7 +80,34 @@ class ServiceController extends Controller
             }
         }
 
+        $wasAvailable = $service->is_available;
         $service->update($validated);
+
+        if (array_key_exists('is_available', $validated) && $wasAvailable !== $service->is_available) {
+            ItemAvailabilityChanged::dispatch('service', $service->id, $service->name, $service->is_available, $request->user()->riad_id);
+            $type = $service->is_available ? 'service_restocked' : 'service_out_of_stock';
+            $title = $service->is_available ? 'Service Restocked' : 'Service Out of Stock';
+            $desc = $service->is_available
+                ? "{$service->name} is now available."
+                : "{$service->name} is no longer available.";
+        } else {
+            $type = 'service_updated';
+            $title = 'Service Updated';
+            $desc = "{$service->name} has been updated.";
+        }
+
+        $notification = Notification::create([
+            'riad_id' => $request->user()->riad_id,
+            'type' => $type,
+            'title' => $title,
+            'description' => $desc,
+            'data' => [
+                'entity_type' => 'service',
+                'entity_id' => $service->id,
+                'name' => $service->name,
+            ],
+        ]);
+        NewNotification::dispatch($notification);
 
         return response()->json($service);
     }
@@ -74,7 +118,22 @@ class ServiceController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        $name = $service->name;
         $service->delete();
+
+        // Notification
+        $notification = Notification::create([
+            'riad_id' => $request->user()->riad_id,
+            'type' => 'service_deleted',
+            'title' => 'Service Removed',
+            'description' => "{$name} has been removed.",
+            'data' => [
+                'entity_type' => 'service',
+                'entity_id' => null,
+                'name' => $name,
+            ],
+        ]);
+        NewNotification::dispatch($notification);
 
         return response()->json(['message' => 'Service deleted successfully']);
     }

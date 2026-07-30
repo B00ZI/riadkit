@@ -3,17 +3,21 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSettings } from "@/hooks/useSettings";
 import { useCatalog } from "@/hooks/useCatalog";
-import type { Category, MenuItem, Service, Excursion } from "@/hooks/useCatalog";
+import type { Category, MenuItem, Service, Excursion, HouseRule } from "@/hooks/useCatalog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { toast } from "@/lib/toast";
 
 // Tab components
 import { SettingsTab } from "@/components/manage-riad/SettingsTab";
 import { MenuTab } from "@/components/manage-riad/MenuTab";
 import { ExcursionsTab } from "@/components/manage-riad/ExcursionsTab";
 import { ServicesTab } from "@/components/manage-riad/ServicesTab";
-import { PhonePreview } from "@/components/manage-riad/PhonePreview";
+import { HouseRulesTab } from "@/components/manage-riad/HouseRulesTab";
+import { IconPicker } from "@/components/manage-riad/IconPicker";
+import { GuestPortalPreview } from "@/components/manage-riad/GuestPortalPreview";
+import { ImageUploader } from "@/components/ui/ImageUploader";
 
 // Dialogs
 import {
@@ -43,6 +47,7 @@ import {
   Utensils,
   Sparkles,
   Globe,
+  BookOpen,
   AlertTriangle,
 } from "lucide-react";
 
@@ -61,6 +66,7 @@ export default function GuestPortalManagement() {
     menuItems,
     excursions,
     services,
+    houseRules,
     isLoading: catalogLoading,
     addCategory,
     deleteCategory,
@@ -73,6 +79,10 @@ export default function GuestPortalManagement() {
     addService,
     updateService,
     deleteService,
+    addHouseRule,
+    updateHouseRule,
+    deleteHouseRule,
+    toggleHouseRule,
   } = catalog;
 
   // ─── State ──────────────────────────────────────────────────
@@ -84,6 +94,7 @@ export default function GuestPortalManagement() {
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [excursionDialogOpen, setExcursionDialogOpen] = useState(false);
   const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
+  const [houseRuleDialogOpen, setHouseRuleDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: string; id: number; name: string } | null>(null);
 
@@ -102,6 +113,8 @@ export default function GuestPortalManagement() {
     price: "",
     description: "",
     category_id: 0,
+    image_url: "",
+    image_public_id: "",
   });
 
   const [excursionForm, setExcursionForm] = useState({
@@ -110,6 +123,8 @@ export default function GuestPortalManagement() {
     price: "",
     duration: "",
     description: "",
+    image_url: "",
+    image_public_id: "",
   });
 
   const [serviceForm, setServiceForm] = useState({
@@ -117,6 +132,14 @@ export default function GuestPortalManagement() {
     name: "",
     price: "",
     requires_quantity: false,
+  });
+
+  const [houseRuleForm, setHouseRuleForm] = useState({
+    id: null as number | null,
+    title: "",
+    description: "",
+    value: "",
+    icon: "Info",
   });
 
   // ─── Sync Settings ──────────────────────────────────────────
@@ -129,6 +152,10 @@ export default function GuestPortalManagement() {
         wifiPassword: settings.wifiPassword || "",
         whatsappNumber: settings.whatsappNumber || "",
         instagramUrl: settings.instagramUrl || "",
+        logo_url: settings.logo_url || "",
+        logo_public_id: settings.logo_public_id || "",
+        cover_image_url: settings.cover_image_url || "",
+        cover_image_public_id: settings.cover_image_public_id || "",
       });
     }
   }, [settings]);
@@ -168,6 +195,17 @@ export default function GuestPortalManagement() {
     [catalog, updateService]
   );
 
+  const handleToggleHouseRule = useCallback(
+    async (id: number, isActive: boolean) => {
+      if ((catalog as any).toggleHouseRule) {
+        await (catalog as any).toggleHouseRule(id, isActive);
+      } else {
+        await updateHouseRule(id, { is_active: isActive });
+      }
+    },
+    [catalog, updateHouseRule]
+  );
+
   // ─── Handlers ─────────────────────────────────────────────────
 
   // Category
@@ -194,6 +232,8 @@ export default function GuestPortalManagement() {
         price: item.price.toString(),
         description: item.description || "",
         category_id: item.category_id,
+        image_url: item.image_url || "",
+        image_public_id: item.image_public_id || "",
       });
     } else {
       setIsEditMode(false);
@@ -203,6 +243,8 @@ export default function GuestPortalManagement() {
         price: "",
         description: "",
         category_id: categoryId,
+        image_url: "",
+        image_public_id: "",
       });
     }
     setItemDialogOpen(true);
@@ -216,6 +258,8 @@ export default function GuestPortalManagement() {
       description: itemForm.description,
       category_id: itemForm.category_id,
       is_available: true,
+      image_url: itemForm.image_url,
+      image_public_id: itemForm.image_public_id,
     };
     if (isEditMode && itemForm.id) {
       await updateMenuItem(itemForm.id, payload);
@@ -235,6 +279,8 @@ export default function GuestPortalManagement() {
         price: excursion.price.toString(),
         duration: excursion.duration,
         description: excursion.description || "",
+        image_url: excursion.image_url || "",
+        image_public_id: excursion.image_public_id || "",
       });
     } else {
       setIsEditMode(false);
@@ -244,6 +290,8 @@ export default function GuestPortalManagement() {
         price: "",
         duration: "",
         description: "",
+        image_url: "",
+        image_public_id: "",
       });
     }
     setExcursionDialogOpen(true);
@@ -256,6 +304,8 @@ export default function GuestPortalManagement() {
       price: parseFloat(excursionForm.price) || 0,
       duration: excursionForm.duration,
       description: excursionForm.description,
+      image_url: excursionForm.image_url,
+      image_public_id: excursionForm.image_public_id,
     };
     if (isEditMode && excursionForm.id) {
       await updateExcursion(excursionForm.id, payload);
@@ -302,6 +352,47 @@ export default function GuestPortalManagement() {
     setServiceDialogOpen(false);
   };
 
+  // House Rule
+  const openHouseRuleDialog = (rule: HouseRule | null = null) => {
+    if (rule) {
+      setIsEditMode(true);
+      setHouseRuleForm({
+        id: rule.id,
+        title: rule.title,
+        description: rule.description || "",
+        value: rule.value,
+        icon: rule.icon,
+      });
+    } else {
+      setIsEditMode(false);
+      setHouseRuleForm({
+        id: null,
+        title: "",
+        description: "",
+        value: "",
+        icon: "Info",
+      });
+    }
+    setHouseRuleDialogOpen(true);
+  };
+
+  const handleHouseRuleSubmit = async () => {
+    if (!houseRuleForm.title.trim() || !houseRuleForm.value.trim()) return;
+    const payload = {
+      title: houseRuleForm.title,
+      description: houseRuleForm.description || undefined,
+      value: houseRuleForm.value,
+      icon: houseRuleForm.icon,
+      is_active: true,
+    };
+    if (isEditMode && houseRuleForm.id) {
+      await updateHouseRule(houseRuleForm.id, payload);
+    } else {
+      await addHouseRule(payload);
+    }
+    setHouseRuleDialogOpen(false);
+  };
+
   // Delete
   const confirmDelete = (type: string, id: number, name: string) => {
     setDeleteTarget({ type, id, name });
@@ -310,6 +401,7 @@ export default function GuestPortalManagement() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
+    const targetName = deleteTarget.name;
     try {
       switch (deleteTarget.type) {
         case "category":
@@ -324,9 +416,13 @@ export default function GuestPortalManagement() {
         case "service":
           await deleteService(deleteTarget.id);
           break;
+        case "houseRule":
+          await deleteHouseRule(deleteTarget.id);
+          break;
       }
+      toast.success(`${targetName} deleted`);
     } catch (error) {
-      console.error("Delete failed:", error);
+      toast.error("Failed to delete", { description: "Something went wrong. Please try again." });
     } finally {
       setDeleteDialogOpen(false);
       setDeleteTarget(null);
@@ -342,8 +438,14 @@ export default function GuestPortalManagement() {
       wifiName: localSettings.wifiName,
       wifiPassword: localSettings.wifiPassword,
       whatsappNumber: localSettings.whatsappNumber,
+      instagramUrl: localSettings.instagramUrl,
+      logo_url: localSettings.logo_url,
+      logo_public_id: localSettings.logo_public_id,
+      cover_image_url: localSettings.cover_image_url,
+      cover_image_public_id: localSettings.cover_image_public_id,
     };
     await updateSettings(payload);
+    toast.success("Settings saved");
   };
 
   // ─── Loading ──────────────────────────────────────────────────
@@ -372,7 +474,7 @@ export default function GuestPortalManagement() {
         {/* ─── LEFT: EDITOR ───────────────────────────────────── */}
         <div className="xl:col-span-7">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-4 w-full h-12 bg-muted/50 p-1 rounded-xl mb-6">
+            <TabsList className="grid grid-cols-5 w-full h-12 bg-muted/50 p-1 rounded-xl mb-6">
               <TabsTrigger value="info" className="text-[10px] font-black uppercase flex items-center gap-1.5">
                 <Info className="w-4 h-4" /> Identity
               </TabsTrigger>
@@ -384,6 +486,9 @@ export default function GuestPortalManagement() {
               </TabsTrigger>
               <TabsTrigger value="services" className="text-[10px] font-black uppercase flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4" /> Services
+              </TabsTrigger>
+              <TabsTrigger value="rules" className="text-[10px] font-black uppercase flex items-center gap-1.5">
+                <BookOpen className="w-4 h-4" /> Rules
               </TabsTrigger>
             </TabsList>
 
@@ -426,16 +531,28 @@ export default function GuestPortalManagement() {
                 onToggleAvailability={handleToggleServiceAvailability}
               />
             </TabsContent>
+
+            <TabsContent value="rules" className="space-y-4">
+              <HouseRulesTab
+                houseRules={houseRules}
+                onOpenDialog={openHouseRuleDialog}
+                onDelete={(id, name) => confirmDelete('houseRule', id, name)}
+                onToggleActive={handleToggleHouseRule}
+              />
+            </TabsContent>
           </Tabs>
         </div>
 
         {/* ─── RIGHT: PREVIEW ────────────────────────────────── */}
         <div className="xl:col-span-5 hidden xl:block sticky top-24 self-start">
-          <PhonePreview
-            riadName={localSettings?.name}
-            wifiName={localSettings?.wifiName}
+          <GuestPortalPreview
+            activeCmsTab={activeTab}
+            settings={localSettings}
+            categories={categories}
             menuItems={menuItems}
+            services={services}
             excursions={excursions}
+            houseRules={houseRules}
           />
         </div>
       </div>
@@ -525,6 +642,19 @@ export default function GuestPortalManagement() {
               />
             </div>
             <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase tracking-widest">Image</Label>
+              <ImageUploader
+                currentUrl={itemForm.image_url}
+                folder="menu-items"
+                onUploadComplete={(url, publicId) =>
+                  setItemForm({ ...itemForm, image_url: url, image_public_id: publicId })
+                }
+                onRemove={() =>
+                  setItemForm({ ...itemForm, image_url: '', image_public_id: '' })
+                }
+              />
+            </div>
+            <div className="space-y-2">
               <Label className="text-[10px] font-black uppercase tracking-widest">
                 Price (MAD)
               </Label>
@@ -584,6 +714,19 @@ export default function GuestPortalManagement() {
                 onChange={(e) => setExcursionForm({ ...excursionForm, name: e.target.value })}
                 placeholder="e.g. Agafay Desert Dinner"
                 className="h-11 font-bold"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase tracking-widest">Image</Label>
+              <ImageUploader
+                currentUrl={excursionForm.image_url}
+                folder="excursions"
+                onUploadComplete={(url, publicId) =>
+                  setExcursionForm({ ...excursionForm, image_url: url, image_public_id: publicId })
+                }
+                onRemove={() =>
+                  setExcursionForm({ ...excursionForm, image_url: '', image_public_id: '' })
+                }
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -696,6 +839,67 @@ export default function GuestPortalManagement() {
               disabled={!serviceForm.name.trim()}
             >
               {isEditMode ? "Save Changes" : "Add Service"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* House Rule Dialog */}
+      <Dialog open={houseRuleDialogOpen} onOpenChange={setHouseRuleDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="font-black uppercase tracking-tight">
+              {isEditMode ? "Edit" : "New"} House Rule
+            </DialogTitle>
+            <DialogDescription>
+              {isEditMode
+                ? "Update the details of this house rule."
+                : "Add a new rule or info for your guests to see."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase opacity-60">Title</Label>
+              <Input
+                value={houseRuleForm.title}
+                onChange={(e) => setHouseRuleForm({ ...houseRuleForm, title: e.target.value })}
+                placeholder="e.g. Quiet Hours"
+                className="h-11 font-bold"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase opacity-60">Description</Label>
+              <Textarea
+                value={houseRuleForm.description}
+                onChange={(e) => setHouseRuleForm({ ...houseRuleForm, description: e.target.value })}
+                placeholder="e.g. Please respect other guests"
+                className="min-h-20"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase opacity-60">Value</Label>
+              <Input
+                value={houseRuleForm.value}
+                onChange={(e) => setHouseRuleForm({ ...houseRuleForm, value: e.target.value })}
+                placeholder="e.g. 10:00 PM — 08:00 AM"
+                className="h-11 font-bold"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase opacity-60">Icon</Label>
+              <IconPicker
+                value={houseRuleForm.icon}
+                onChange={(icon) => setHouseRuleForm({ ...houseRuleForm, icon })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={handleHouseRuleSubmit}
+              className="w-full font-black uppercase text-xs"
+              disabled={!houseRuleForm.title.trim() || !houseRuleForm.value.trim()}
+            >
+              {isEditMode ? "Save Changes" : "Add Rule"}
             </Button>
           </DialogFooter>
         </DialogContent>

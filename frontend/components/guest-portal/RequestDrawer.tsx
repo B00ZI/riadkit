@@ -21,6 +21,7 @@ interface RequestDrawerProps {
   isExpired: boolean;
   isSubmitting: boolean;
   onConfirm: () => void;
+  currency?: string;
 }
 
 export const RequestDrawer = ({
@@ -32,6 +33,7 @@ export const RequestDrawer = ({
   isExpired,
   isSubmitting,
   onConfirm,
+  currency = "MAD",
 }: RequestDrawerProps) => {
   if (!item) return null;
 
@@ -47,7 +49,7 @@ export const RequestDrawer = ({
           </DrawerTitle>
           <DrawerDescription className="text-center font-medium text-xs text-muted-foreground">
             {item.price > 0 ? (
-              <span className="text-primary font-black">{item.price} MAD</span>
+              <span className="text-primary font-black">{item.price} {currency}</span>
             ) : (
               "Complimentary Guest Service"
             )}

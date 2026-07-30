@@ -31,17 +31,10 @@ export default function GuestPortalPage() {
   const [quantity, setQuantity] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Derived data (with fallbacks)
+  // Derived data (safe before guards)
   const menuCategories = data?.menu ?? [];
   const excursions = data?.excursions ?? [];
   const services = data?.services ?? [];
-  const riad = data?.riad ?? {
-    name: "Riad",
-    description: "",
-    wifiName: "",
-    wifiPassword: "",
-    whatsappNumber: "",
-  };
 
   // ─── HANDLERS ──────────────────────────────────────────────
 
@@ -68,13 +61,6 @@ export default function GuestPortalPage() {
       setRequestItem(null);
     } else {
       alert(result.error || "Failed to submit request.");
-    }
-  };
-
-  const openWhatsApp = () => {
-    const number = riad.whatsappNumber?.replace(/[^0-9]/g, "");
-    if (number) {
-      window.open(`https://wa.me/${number}`, "_blank");
     }
   };
 
@@ -106,6 +92,18 @@ export default function GuestPortalPage() {
     );
   }
 
+  // Data is guaranteed non-null from here
+  const riad = data.riad;
+  const currency = riad.currency ?? "MAD";
+  const houseRules = data.house_rules ?? [];
+
+  const openWhatsApp = () => {
+    const number = riad.whatsappNumber?.replace(/[^0-9]/g, "");
+    if (number) {
+      window.open(`https://wa.me/${number}`, "_blank");
+    }
+  };
+
   // ─── RENDER ────────────────────────────────────────────────
 
   return (
@@ -116,6 +114,7 @@ export default function GuestPortalPage() {
         isExpired={isExpired}
         whatsappNumber={riad.whatsappNumber}
         onWhatsAppClick={openWhatsApp}
+        logoUrl={riad.logo_url}
       />
 
       <main className="flex-1 w-full overflow-y-auto overflow-x-hidden pb-28 no-scrollbar">
@@ -125,6 +124,7 @@ export default function GuestPortalPage() {
             roomNumber={data.room_number ?? "?"}
             onNavigate={(tab) => setActiveTab(tab)}
             onWhatsAppClick={openWhatsApp}
+            houseRules={houseRules}
           />
         )}
 
@@ -133,6 +133,7 @@ export default function GuestPortalPage() {
             categories={menuCategories}
             isExpired={isExpired}
             onRequestItem={handleRequestItem}
+            currency={currency}
           />
         )}
 
@@ -141,6 +142,7 @@ export default function GuestPortalPage() {
             excursions={excursions}
             isExpired={isExpired}
             onRequestItem={handleRequestItem}
+            currency={currency}
           />
         )}
 
@@ -149,6 +151,7 @@ export default function GuestPortalPage() {
             services={services}
             isExpired={isExpired}
             onRequestItem={handleRequestItem}
+            currency={currency}
           />
         )}
       </main>
@@ -164,6 +167,7 @@ export default function GuestPortalPage() {
         isExpired={isExpired}
         isSubmitting={isSubmitting}
         onConfirm={handleConfirmRequest}
+        currency={currency}
       />
 
       <SuccessDrawer

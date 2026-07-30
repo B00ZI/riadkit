@@ -19,11 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [
-        'http://localhost:3000',
-        'http://192.168.100.53:3000',
-        'http://192.168.1.53:3000',
-    ],
+    'allowed_origins' => explode(',', env('FRONTEND_URL', 'http://localhost:3000')),
 
     'allowed_origins_patterns' => [],
 

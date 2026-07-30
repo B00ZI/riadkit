@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function RegisterPage() {
@@ -45,11 +46,11 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4 py-12">
       <Card className="w-full max-w-lg bg-card border-border shadow-2xl">
         <CardHeader className="space-y-3 pb-6 text-center">
-          <div className="w-12 h-12 bg-primary rounded-xl mx-auto flex items-center justify-center shadow-lg shadow-primary/20">
-            <span className="text-primary-foreground font-black text-2xl">R</span>
+          <div className="relative w-14 h-14 mx-auto">
+            <Image src="/riadkitlogo.png" alt="RiadKit" fill className="object-contain" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-black uppercase tracking-tight">Onboard Your Riad</CardTitle>
+            <CardTitle className="text-2xl font-heading font-semibold tracking-tight">Onboard Your Riad</CardTitle>
             <CardDescription className="font-medium mt-1">
               Create your SaaS account to digitize your guest experience.
             </CardDescription>

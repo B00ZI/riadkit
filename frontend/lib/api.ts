@@ -1,7 +1,6 @@
-// lib/api/client.ts
 import Cookies from "js-cookie";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.100.53:8000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Define routes to handle Staff/Guest logic correctly based on your OpenAPI spec
 const PUBLIC_ROUTES = ['/api/register', '/api/login', '/api/guest/portal'];
@@ -16,7 +15,7 @@ export async function fetchApi<T = any>(endpoint: string, options: RequestInit =
     // 1. Always demand JSON from Laravel
     headers.set("Accept", "application/json");
 
-    // 2. Automatically format body requests as JSON
+    // 2. Automatically format body requests as JSON (skip for FormData)
     if (options.body && typeof options.body === "string" && !headers.has("Content-Type")) {
         headers.set("Content-Type", "application/json");
     }
@@ -24,13 +23,9 @@ export async function fetchApi<T = any>(endpoint: string, options: RequestInit =
     // 3. Inject STAFF Sanctum Token (Skip for public routes like login)
     if (!isPublicRoute) {
         const staffToken = Cookies.get("riadkit_staff_token");
-        console.log('� Token from cookie:', staffToken); // DEBUG
-        
+
         if (staffToken) {
             headers.set("Authorization", `Bearer ${staffToken}`);
-            console.log('✅ Authorization header set'); // DEBUG
-        } else {
-            console.warn('❌ No token found in cookies'); // DEBUG
         }
     }
 
@@ -46,7 +41,7 @@ export async function fetchApi<T = any>(endpoint: string, options: RequestInit =
                     body.session_id = guestSessionId;
                     options.body = JSON.stringify(body);
                 } catch (e) {
-                    console.warn('Failed to parse body for session_id injection:', e);
+                    // Ignore parse errors
                 }
             }
         } else if (!endpoint.includes('session_id=')) {
@@ -77,18 +72,13 @@ export async function fetchApi<T = any>(endpoint: string, options: RequestInit =
             data = await response.json();
         } else {
             const textError = await response.text();
-            console.error("Received HTML instead of JSON:", textError.substring(0, 200));
             data = { message: `Server error: Received HTML (Status ${response.status})` };
         }
 
         if (!response.ok) {
-        console.error(`Fetch error [${endpoint}]:`, response.status, data);
-
-            // Handle Staff Token Expired (401)
             if (response.status === 401) {
                 const token = Cookies.get("riadkit_staff_token");
                 if (token && typeof window !== "undefined" && window.location.pathname !== '/login') {
-                    console.warn("Unauthorized! Wiping token and redirecting...");
                     Cookies.remove("riadkit_staff_token", { path: '/' });
                     if (!window.location.pathname.startsWith('/room/')) {
                         window.location.href = "/login";
@@ -113,7 +103,6 @@ export async function fetchApi<T = any>(endpoint: string, options: RequestInit =
 
         return data as T;
     } catch (error: any) {
-        console.error(`API Error [${endpoint}]:`, error);
         if (error.status) throw error;
         throw { 
             status: 0, 

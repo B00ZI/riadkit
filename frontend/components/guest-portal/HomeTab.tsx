@@ -11,12 +11,10 @@ import {
   Sparkles,
   ConciergeBell,
   ArrowRight,
-  Coffee,
-  Clock,
-  Moon,
-  CigaretteOff,
+  Camera,
 } from "lucide-react";
 import { useState } from "react";
+import { getHouseRuleIcon } from "@/lib/houseRuleIcons";
 
 interface RiadInfo {
   name: string;
@@ -24,6 +22,16 @@ interface RiadInfo {
   wifiName: string;
   wifiPassword: string;
   whatsappNumber: string;
+  instagramUrl?: string;
+  cover_image_url?: string;
+}
+
+export interface HouseRuleItem {
+  title: string;
+  description?: string;
+  value: string;
+  icon: string;
+  sort_order?: number;
 }
 
 interface HomeTabProps {
@@ -31,9 +39,12 @@ interface HomeTabProps {
   roomNumber: string;
   onNavigate: (tab: "menu" | "explore" | "services") => void;
   onWhatsAppClick: () => void;
+  houseRules?: HouseRuleItem[];
 }
 
-export const HomeTab = ({ riad, onNavigate, onWhatsAppClick }: HomeTabProps) => {
+const RULE_COLORS = ["amber", "blue", "purple", "rose"] as const;
+
+export const HomeTab = ({ riad, onNavigate, onWhatsAppClick, houseRules }: HomeTabProps) => {
   const [copiedWifi, setCopiedWifi] = useState(false);
 
   const copyWifiPassword = () => {
@@ -46,6 +57,17 @@ export const HomeTab = ({ riad, onNavigate, onWhatsAppClick }: HomeTabProps) => 
 
   return (
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300 px-6 py-5 space-y-7">
+      {/* Cover Image */}
+      {riad.cover_image_url && (
+        <div className="-mx-6 -mt-5 mb-2">
+          <img
+            src={riad.cover_image_url}
+            alt=""
+            className="w-full h-40 object-cover"
+          />
+        </div>
+      )}
+
       {/* Welcome Banner */}
       <div className="space-y-1.5">
         <span className="text-[10px] font-black uppercase tracking-widest text-primary">
@@ -60,43 +82,74 @@ export const HomeTab = ({ riad, onNavigate, onWhatsAppClick }: HomeTabProps) => 
       </div>
 
       {/* WiFi Card */}
-      <Card className="w-full p-5 bg-gradient-to-br from-primary via-primary/95 to-primary/80 text-primary-foreground border-none shadow-lg shadow-primary/15 relative overflow-hidden rounded-2xl">
-        <div className="relative z-10 space-y-4">
-          <div className="flex items-center gap-2 text-primary-foreground/80">
-            <Wifi className="w-4 h-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest">High-Speed Guest WiFi</span>
-          </div>
-          <div className="flex justify-between items-end gap-2">
-            <div className="min-w-0">
-              <p className="text-sm font-black truncate text-primary-foreground/90">
-                Network: <span className="text-base text-white">{riad.wifiName || "Riad_Guest"}</span>
-              </p>
-              <p className="text-xs font-bold text-primary-foreground/75 truncate mt-0.5">
-                Password: {riad.wifiPassword || "Available at reception"}
-              </p>
+      {riad.wifiName && (
+        <Card className="w-full p-5 bg-gradient-to-br from-primary via-primary/95 to-primary/80 text-primary-foreground border-none shadow-lg shadow-primary/15 relative overflow-hidden rounded-2xl">
+          <div className="relative z-10 space-y-4">
+            <div className="flex items-center gap-2 text-primary-foreground/80">
+              <Wifi className="w-4 h-4" />
+              <span className="text-[10px] font-black uppercase tracking-widest">High-Speed Guest WiFi</span>
             </div>
-            {riad.wifiPassword && (
-              <Button
-                variant="secondary"
-                size="sm"
-                className="font-black text-[10px] uppercase h-8 px-3 shrink-0 bg-white text-primary hover:bg-white/90 shadow-sm"
-                onClick={copyWifiPassword}
-              >
-                {copiedWifi ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 mr-1 text-emerald-600" /> Copied
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5 mr-1" /> Copy
-                  </>
+            <div className="flex justify-between items-end gap-2">
+              <div className="min-w-0">
+                <p className="text-sm font-black truncate text-primary-foreground/90">
+                  Network: <span className="text-base text-white">{riad.wifiName}</span>
+                </p>
+                {riad.wifiPassword && (
+                  <p className="text-xs font-bold text-primary-foreground/75 truncate mt-0.5">
+                    Password: {riad.wifiPassword}
+                  </p>
                 )}
-              </Button>
-            )}
+              </div>
+              {riad.wifiPassword && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="font-black text-[10px] uppercase h-8 px-3 shrink-0 bg-white text-primary hover:bg-white/90 shadow-sm"
+                  onClick={copyWifiPassword}
+                >
+                  {copiedWifi ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 mr-1 text-emerald-600" /> Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 mr-1" /> Copy
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
-        <Wifi className="absolute -right-6 -bottom-6 w-32 h-32 text-white/10 rotate-12 pointer-events-none" />
-      </Card>
+          <Wifi className="absolute -right-6 -bottom-6 w-32 h-32 text-white/10 rotate-12 pointer-events-none" />
+        </Card>
+      )}
+
+      {/* Social Links */}
+      {riad.instagramUrl && (
+        <a
+          href={riad.instagramUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+        >
+          <Card className="w-full p-4 bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-orange-500/10 border-purple-200/40 dark:border-purple-800/20 hover:border-purple-400/60 transition-colors rounded-2xl shadow-2xs">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-md">
+                  <Camera className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase text-foreground">Follow Us</p>
+                  <p className="text-[10px] font-medium text-muted-foreground">@riadkit</p>
+                </div>
+              </div>
+              <div className="text-[10px] font-black uppercase text-purple-600 dark:text-purple-400 bg-white/60 dark:bg-zinc-900/60 px-3 py-1.5 rounded-full border border-purple-200/40">
+                instagram
+              </div>
+            </div>
+          </Card>
+        </a>
+      )}
 
       {/* What We Offer (Quick Links) */}
       <div className="space-y-3">
@@ -139,10 +192,20 @@ export const HomeTab = ({ riad, onNavigate, onWhatsAppClick }: HomeTabProps) => 
           Guest Info & House Rules
         </h3>
         <div className="bg-card rounded-2xl border border-border/80 divide-y divide-border/60 overflow-hidden shadow-2xs">
-          <RuleItem icon={Coffee} label="Breakfast Served" detail="Courtyard & Terrace" value="08:30 — 10:30 AM" color="amber" />
-          <RuleItem icon={Clock} label="Check-Out Time" detail="Late check-out upon request" value="11:00 AM" color="blue" />
-          <RuleItem icon={Moon} label="Quiet Hours" detail="Please respect other guests" value="10:00 PM — 08:00 AM" color="purple" />
-          <RuleItem icon={CigaretteOff} label="Smoking Policy" detail="Allowed only on rooftop terrace" value="Terrace Only" color="rose" valueIsBadge />
+          {houseRules?.map((rule, index) => {
+            const Icon = getHouseRuleIcon(rule.icon);
+            const color = RULE_COLORS[index % RULE_COLORS.length];
+            return (
+              <RuleItem
+                key={index}
+                icon={Icon}
+                label={rule.title}
+                detail={rule.description || ""}
+                value={rule.value}
+                color={color}
+              />
+            );
+          })}
         </div>
       </div>
     </div>

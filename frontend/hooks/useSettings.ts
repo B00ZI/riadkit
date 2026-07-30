@@ -10,6 +10,10 @@ export type Settings = {
   wifiPassword?: string;
   whatsappNumber: string;
   instagramUrl?: string;
+  logo_url?: string;
+  logo_public_id?: string;
+  cover_image_url?: string;
+  cover_image_public_id?: string;
   created_at?: string;
   updated_at?: string;
 };
@@ -21,6 +25,10 @@ const DEFAULT_SETTINGS: Settings = {
   wifiPassword: '',
   whatsappNumber: '',
   instagramUrl: '',
+  logo_url: '',
+  logo_public_id: '',
+  cover_image_url: '',
+  cover_image_public_id: '',
 };
 
 export function useSettings() {
@@ -41,7 +49,6 @@ export function useSettings() {
         ...riad,
       });
     } catch (error: any) {
-      console.error('Failed to fetch settings:', error);
       setError(error.message || 'Failed to load settings');
       // Keep default settings (no change)
     } finally {

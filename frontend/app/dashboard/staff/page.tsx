@@ -56,6 +56,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useStaff, type StaffMember } from "@/hooks/useStaff";
+import { toast } from "@/lib/toast";
 
 // ─── Type for temporary credentials ──────────────────────────
 type NewStaffCredentials = {
@@ -101,17 +102,17 @@ export default function StaffManagement() {
   const handleCreateSubmit = async () => {
     try {
       const newUser = await createStaff(newStaff);
-      // Show temporary credentials
+      toast.success(`${newUser.name} added`, { description: "Temporary credentials shown below." });
       setTempCredentials({
         name: newUser.name,
         email: newUser.email,
-        password: newStaff.password, // we have it from the form
+        password: newStaff.password,
       });
       setCredentialDialogOpen(true);
       setCreateDialogOpen(false);
       setNewStaff({ name: "", email: "", password: "", password_confirmation: "" });
     } catch {
-      // error is handled in the hook
+      toast.error("Failed to create staff");
     }
   };
 
@@ -120,23 +121,29 @@ export default function StaffManagement() {
     if (!selectedStaff) return;
     try {
       await updateStaff(selectedStaff.id, editStaff);
+      toast.success(`${selectedStaff.name} updated`);
       setEditDialogOpen(false);
       setSelectedStaff(null);
       setEditStaff({ name: "", email: "", password: "", password_confirmation: "" });
     } catch {
-      // error handled in hook
+      toast.error("Failed to update staff");
     }
   };
 
   // Delete
   const handleDeleteConfirm = async () => {
     if (!selectedStaff) return;
+    const name = selectedStaff.name;
     try {
       await deleteStaff(selectedStaff.id);
+      toast.undo(`${name} deleted`, {
+        onUndo: () => {},
+        description: "Staff member removed",
+      });
       setDeleteDialogOpen(false);
       setSelectedStaff(null);
     } catch {
-      // error handled in hook
+      toast.error("Failed to delete staff");
     }
   };
 

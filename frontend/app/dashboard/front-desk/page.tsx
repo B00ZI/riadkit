@@ -1,4 +1,3 @@
-// app/dashboard/front-desk/page.tsx
 "use client";
 
 import { useRooms } from "@/hooks/useRooms";
@@ -29,6 +28,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { AnimatedOrderList } from "@/components/AnimatedOrderList";
 
 type FilterStatus = "pending" | "in_progress" | "completed";
 
@@ -50,7 +50,7 @@ export default function OwnerFrontDesk() {
     error: requestsError,
   } = useRequests({
     status: 'pending,in_progress,completed',
-    days: 1, // only completed from the last 24 hours
+    days: 1,
   });
 
   const [filter, setFilter] = useState<FilterStatus>("pending");
@@ -115,6 +115,9 @@ export default function OwnerFrontDesk() {
     );
   }
 
+  const formatStatus = (s: FilterStatus) =>
+    s === "in_progress" ? "in progress" : s;
+
   // ─── Render ──────────────────────────────────────────────────
   return (
     <div className="flex flex-col space-y-6">
@@ -152,77 +155,68 @@ export default function OwnerFrontDesk() {
               : "text-muted-foreground hover:bg-muted/50"
           }`}
         >
-          {s === "in_progress" ? "in progress" : s}
+          {formatStatus(s)}
         </button>
       ))}
     </div>
   </div>
 
   {/* ─── Request List ──────────────────────────────────── */}
-  <div className="space-y-2">
-    {requests
-      .filter((r) => r.status === filter)
-      .map((order) => (
-        <Card
-          key={order.id}
-          className="px-4 py-3 bg-card border-border shadow-sm hover:shadow-md transition-shadow flex flex-col gap-2"
-        >
-          {/* ... card content (unchanged) ... */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="font-black text-[10px] uppercase px-2 py-0.5">
-                {order.room_number}
-              </Badge>
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
-                {order.type}
-              </span>
-            </div>
-            <span className="text-sm font-black text-primary">
-              {order.total_price} MAD
+  <AnimatedOrderList
+    orders={requests}
+    filterStatus={filter}
+    onStatusChange={(id, status) => updateStatus(id, status as any)}
+    emptyMessage={`No ${filter} requests`}
+    emptyIcon={<CheckCircle2 className="w-10 h-10 mx-auto text-emerald-500/50 mb-2" />}
+    renderCard={(order, handleStatusChange) => (
+      <Card className="px-4 py-3 bg-card border-border shadow-sm hover:shadow-md transition-shadow flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="font-black text-[10px] uppercase px-2 py-0.5">
+              {order.room_number}
+            </Badge>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
+              {order.type}
             </span>
           </div>
-          <p className="text-sm font-bold leading-tight">
-            {order.quantity}x <span className="font-medium">{order.item_name}</span>
-          </p>
-          <div className="flex items-center gap-2 mt-1">
-            {order.status === "pending" && (
-              <Button
-                onClick={() => updateStatus(order.id, "in_progress")}
-                size="sm"
-                className="flex-1 h-8 font-black uppercase text-[10px]"
-              >
-                Accept
-              </Button>
-            )}
-            {order.status === "in_progress" && (
-              <Button
-                onClick={() => updateStatus(order.id, "completed")}
-                size="sm"
-                className="flex-1 h-8 font-black uppercase text-[10px] bg-emerald-600 hover:bg-emerald-700"
-              >
-                Complete
-              </Button>
-            )}
+          <span className="text-sm font-black text-primary">
+            {order.total_price} MAD
+          </span>
+        </div>
+        <p className="text-sm font-bold leading-tight">
+          {order.quantity}x <span className="font-medium">{order.item_name}</span>
+        </p>
+        <div className="flex items-center gap-2 mt-1">
+          {order.status === "pending" && (
             <Button
-              variant="outline"
+              onClick={() => handleStatusChange(order.id, "in_progress")}
               size="sm"
-              onClick={() => updateStatus(order.id, "cancelled")}
-              className="flex-1 h-8 font-black uppercase text-[10px] border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
+              className="flex-1 h-8 font-black uppercase text-[10px]"
             >
-              Cancel
+              Accept
             </Button>
-          </div>
-        </Card>
-      ))}
-
-    {requests.filter((r) => r.status === filter).length === 0 && (
-      <div className="text-center py-12 text-muted-foreground">
-        <CheckCircle2 className="w-10 h-10 mx-auto text-emerald-500/50 mb-2" />
-        <p className="text-sm font-medium">No {filter} requests</p>
-        <p className="text-xs">All clear at the front desk</p>
-      </div>
+          )}
+          {order.status === "in_progress" && (
+            <Button
+              onClick={() => handleStatusChange(order.id, "completed")}
+              size="sm"
+              className="flex-1 h-8 font-black uppercase text-[10px] bg-emerald-600 hover:bg-emerald-700"
+            >
+              Complete
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleStatusChange(order.id, "cancelled")}
+            className="flex-1 h-8 font-black uppercase text-[10px] border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
+          >
+            Cancel
+          </Button>
+        </div>
+      </Card>
     )}
-  </div>
+  />
 
   {/* ─── "View All History" – now at the bottom (only on completed) ─── */}
   {filter === "completed" && (

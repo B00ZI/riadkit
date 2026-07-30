@@ -16,11 +16,16 @@ export type GuestPortalData = {
         whatsappNumber: string;
         instagramUrl?: string;
         logoUrl?: string;
+        logo_url?: string;
+        logo_public_id?: string;
+        cover_image_url?: string;
+        cover_image_public_id?: string;
         currency?: string;
     };
     menu: any[];
     services: any[];
     excursions: any[];
+    house_rules: any[];
     session_id?: string | null;          // ✅ Backend uses this
     session_status: 'active' | 'expired' | 'none';
     // current_session_id is not used by backend, but kept for compatibility if needed
@@ -58,7 +63,6 @@ export function useGuestPortal(qrToken: string) {
                 setIsExpired(false);
             }
         } catch (error: any) {
-            console.error('Failed to load guest portal:', error);
             if (error.status === 403) {
                 setIsExpired(true);
                 // Keep the cookie – backend says it's expired, but we keep it for sticky token defense

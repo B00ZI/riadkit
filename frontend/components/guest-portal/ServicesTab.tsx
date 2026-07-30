@@ -17,6 +17,7 @@ interface ServicesTabProps {
   services: Service[];
   isExpired: boolean;
   onRequestItem: (item: Service & { requestType: string }) => void;
+  currency?: string;
 }
 
 // Map service names to icons (you can expand this)
@@ -33,7 +34,7 @@ const getServiceIcon = (name: string) => {
   return ShoppingBag; // default
 };
 
-export const ServicesTab = ({ services, isExpired, onRequestItem }: ServicesTabProps) => (
+export const ServicesTab = ({ services, isExpired, onRequestItem, currency = "MAD" }: ServicesTabProps) => (
   <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300 py-5 px-6 space-y-4">
     <div>
       <h2 className="text-xl font-black uppercase tracking-tight">Room Services</h2>
@@ -73,7 +74,7 @@ export const ServicesTab = ({ services, isExpired, onRequestItem }: ServicesTabP
                   </div>
                   <div className="shrink-0">
                     <span className="text-sm font-bold text-primary bg-primary/5 px-3 py-1 rounded-full border border-primary/10">
-                      {item.price > 0 ? `${item.price} MAD` : "Free"}
+                      {item.price > 0 ? `${item.price} ${currency}` : "Free"}
                     </span>
                   </div>
                 </div>

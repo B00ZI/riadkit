@@ -3,6 +3,9 @@
 
 import { useState } from "react";
 import { useRooms } from "@/hooks/useRooms";
+import { useSettings } from "@/hooks/useSettings";
+import { useQRPrint } from "@/hooks/useQRPrint";
+import { toast } from "@/lib/toast";
 import { 
   Table, 
   TableBody, 
@@ -27,60 +30,60 @@ import {
 } from "@/components/ui/dialog";
 import { 
   Plus, 
-  QrCode, 
+  Download,
   Trash2,
   Copy,
   Check,
   Loader2,
   AlertTriangle
 } from "lucide-react";
-import QRCode from 'qrcode';
 
 export default function RoomsManagement() {
   // ─── Hooks ──────────────────────────────────────────────────
   const { rooms, isLoading, error, createRoom, deleteRoom } = useRooms();
-  
+  const { settings } = useSettings();
+  const { printSingle, printAll } = useQRPrint();
+
+  const riadName = settings.name || 'Riad';
+
   // ─── State ──────────────────────────────────────────────────
   const [copied, setCopied] = useState<string | null>(null);
-  const [qrDialogOpen, setQrDialogOpen] = useState(false);
-  const [selectedRoom, setSelectedRoom] = useState<any>(null);
-  const [qrImage, setQrImage] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newRoomNumber, setNewRoomNumber] = useState("");
   const [newRoomType, setNewRoomType] = useState("Standard");
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState("");
-
-  // ─── QR Functions ──────────────────────────────────────────
-  const generateQR = async (token: string): Promise<string> => {
-    const url = `${window.location.origin}/room/${token}`;
-    return QRCode.toDataURL(url, {
-      width: 280,
-      margin: 2,
-      color: { dark: '#1a1a2e', light: '#ffffff' }
-    });
-  };
-
-  const openQRDialog = async (room: any) => {
-    setSelectedRoom(room);
-    setQrDialogOpen(true);
-    setIsGenerating(true);
-    try {
-      const data = await generateQR(room.qr_token);
-      setQrImage(data);
-    } catch (err) {
-      console.error('QR generation failed:', err);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  const [printingRoom, setPrintingRoom] = useState<number | null>(null);
+  const [printingAll, setPrintingAll] = useState(false);
 
   // ─── Copy ──────────────────────────────────────────────────
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(text);
     setTimeout(() => setCopied(null), 2000);
+  };
+
+  // ─── Print ─────────────────────────────────────────────────
+  const handlePrintSingle = async (room: { id: number; room_number: string; qr_token: string }) => {
+    setPrintingRoom(room.id);
+    try {
+      await printSingle(riadName, { room_number: room.room_number, qr_token: room.qr_token });
+    } catch (err) {
+      toast.error('Failed to generate QR card');
+    } finally {
+      setPrintingRoom(null);
+    }
+  };
+
+  const handlePrintAll = async () => {
+    setPrintingAll(true);
+    try {
+      await printAll(riadName, rooms.map(r => ({ room_number: r.room_number, qr_token: r.qr_token })));
+    } catch (err) {
+      toast.error('Failed to generate QR cards');
+    } finally {
+      setPrintingAll(false);
+    }
   };
 
   // ─── Room CRUD ─────────────────────────────────────────────
@@ -90,11 +93,13 @@ export default function RoomsManagement() {
     setIsCreating(true);
     try {
       await createRoom(newRoomNumber, newRoomType);
+      toast.success(`Room ${newRoomNumber} created`);
       setNewRoomNumber("");
       setNewRoomType("Standard");
       setCreateDialogOpen(false);
     } catch (err: any) {
       setCreateError(err.message || "Failed to create room");
+      toast.error("Failed to create room");
     } finally {
       setIsCreating(false);
     }
@@ -103,6 +108,7 @@ export default function RoomsManagement() {
   const handleDeleteRoom = async (id: number) => {
     if (confirm("Delete this room?")) {
       await deleteRoom(id);
+      toast.success("Room deleted");
     }
   };
 
@@ -142,6 +148,20 @@ export default function RoomsManagement() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* ─── DOWNLOAD ALL ──────────────────────────────── */}
+          <Button
+            variant="outline"
+            className="font-black uppercase text-xs px-4 h-11 border-border"
+            onClick={handlePrintAll}
+            disabled={rooms.length === 0 || printingAll}
+          >
+            {printingAll ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</>
+            ) : (
+              <><Download className="w-4 h-4 mr-2" /> Download All QR Cards</>
+            )}
+          </Button>
+
           {/* ─── CREATE ROOM DIALOG ────────────────────── */}
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
@@ -286,9 +306,15 @@ export default function RoomsManagement() {
                         variant="outline" 
                         size="sm" 
                         className="h-8 text-[10px] font-black uppercase border-border"
-                        onClick={() => openQRDialog(room)}
+                        onClick={() => handlePrintSingle(room)}
+                        disabled={printingRoom === room.id}
                       >
-                        <QrCode className="w-3.5 h-3.5 mr-1.5 text-primary" /> QR
+                        {printingRoom === room.id ? (
+                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                          <Download className="w-3.5 h-3.5 mr-1.5" />
+                        )}
+                        Download PDF
                       </Button>
                       <Button 
                         variant="ghost" 
@@ -307,56 +333,19 @@ export default function RoomsManagement() {
         </Table>
       </Card>
 
-      {/* ─── QR DIALOG ─────────────────────────────────────── */}
-      <Dialog open={qrDialogOpen} onOpenChange={(open) => {
-        if (!open) {
-          setQrDialogOpen(false);
-          setQrImage(null);
-        }
-      }}>
-        <DialogContent className="bg-white sm:max-w-95 p-6 overflow-hidden border-none shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="font-black uppercase tracking-tight text-center">
-              QR Code
-            </DialogTitle>
-            <DialogDescription className="text-center">
-              {selectedRoom?.room_number} • {selectedRoom?.type}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {/* QR Card */}
-          <div className="flex flex-col items-center text-center space-y-4 py-4">
-            <div className="p-4 bg-zinc-50 rounded-2xl">
-              {isGenerating ? (
-                <div className="w-52 h-52 flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
-                </div>
-              ) : qrImage ? (
-                <img src={qrImage} alt="QR Code" className="w-52 h-52" />
-              ) : (
-                <div className="w-52 h-52 bg-zinc-200 rounded-xl" />
-              )}
-            </div>
-
-            <div className="text-[10px] font-mono text-zinc-400 bg-zinc-50 px-3 py-1.5 rounded-md break-all w-full">
-              {selectedRoom?.qr_token}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* ─── INFO ───────────────────────────────────────────── */}
       <div className="bg-primary/5 border border-primary/10 rounded-xl p-4 flex gap-4 items-start">
         <div className="bg-primary/20 p-2 rounded-lg shrink-0 text-primary">
-          <QrCode className="w-5 h-5" />
+          <Download className="w-5 h-5" />
         </div>
         <div className="space-y-1">
           <p className="text-sm font-black uppercase text-primary tracking-tight">
-            QR Info
+            QR Cards
           </p>
           <p className="text-xs text-muted-foreground font-medium leading-relaxed">
-            Click <strong>QR</strong> on any room to view the QR code. 
-            The QR code links to the guest portal for that specific room.
+            Click <strong>Download PDF</strong> on any room to open a print-ready QR card. 
+            Use <strong>Download All QR Cards</strong> at the top to print cards for all rooms at once.
+            Your browser's "Save as PDF" option will produce a high-resolution PDF.
           </p>
         </div>
       </div>

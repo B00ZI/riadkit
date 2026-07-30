@@ -16,6 +16,7 @@ class Excursion extends Model
         'price',
         'duration',
         'image_url',
+        'image_public_id',
         'is_available'
     ];
 

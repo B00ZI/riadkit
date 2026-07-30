@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Service extends Model
 {
     use HasFactory;
-    protected $fillable = ['riad_id', 'category_id', 'name', 'description', 'price', 'is_available', 'requires_quantity'];
+    protected $fillable = ['riad_id', 'category_id', 'name', 'description', 'price', 'is_available', 'requires_quantity', 'image_url', 'image_public_id'];
 
     protected $casts = [
         'price' => 'decimal:2',

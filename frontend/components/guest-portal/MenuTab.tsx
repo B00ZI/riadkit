@@ -14,6 +14,7 @@ interface MenuItem {
   price: number;
   is_available?: boolean;
   requires_quantity?: boolean;
+  image_url?: string;
 }
 
 interface MenuCategory {
@@ -26,9 +27,10 @@ interface MenuTabProps {
   categories: MenuCategory[];
   isExpired: boolean;
   onRequestItem: (item: MenuItem & { requestType: string }) => void;
+  currency?: string;
 }
 
-export const MenuTab = ({ categories, isExpired, onRequestItem }: MenuTabProps) => {
+export const MenuTab = ({ categories, isExpired, onRequestItem, currency = "MAD" }: MenuTabProps) => {
   const [filter, setFilter] = useState("All");
 
   const filteredCategories = useMemo(() => {
@@ -108,6 +110,15 @@ export const MenuTab = ({ categories, isExpired, onRequestItem }: MenuTabProps) 
                           : "hover:border-primary/20"
                       }`}
                     >
+                      {item.image_url && (
+                        <div className="w-full h-32 overflow-hidden">
+                          <img
+                            src={item.image_url}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
                       <div className="p-4 space-y-3">
                         <div className="flex justify-between items-start gap-4">
                           <div className="space-y-1 flex-1 min-w-0">
@@ -132,7 +143,7 @@ export const MenuTab = ({ categories, isExpired, onRequestItem }: MenuTabProps) 
                           </div>
                           <div className="shrink-0">
                             <span className="text-sm font-bold text-primary bg-primary/5 px-3 py-1 rounded-full border border-primary/10">
-                              {item.price} MAD
+                              {item.price} {currency}
                             </span>
                           </div>
                         </div>

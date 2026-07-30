@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import Image from "next/image";
 
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -33,23 +35,27 @@ const navItems = [
   { title: "Order History", url: "/dashboard/history", icon: History },
   { title: "Manage Riad", url: "/dashboard/portal", icon: Edit },
   { title: "Rooms & QR", url: "/dashboard/rooms", icon: DoorOpen },
-  { title: "Settings", url: "/dashboard/settings", icon: Settings },
   { title: "Staff", url: "/dashboard/staff", icon: Users },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   return (
     <Sidebar collapsible="icon" className="border-r border-border" {...props}>
       <SidebarHeader className="py-4">
         <div className="flex items-center gap-3 px-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <span className="font-black text-lg">R</span>
+          <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg">
+            <Image src="/riadkitlogo.png" alt="RiadKit" fill className="object-cover" />
           </div>
           <div className="flex flex-col leading-none group-data-[collapsible=icon]:hidden">
-            <span className="font-bold text-foreground">RiadKit</span>
-            <span className="text-[10px] text-muted-foreground uppercase font-black tracking-tighter">Owner Pro</span>
+            <span className="font-heading font-semibold text-foreground text-lg tracking-tight">RiadKit</span>
+            {user && (
+              <span className="text-[11px] text-muted-foreground font-medium truncate max-w-[120px]">
+                {user.user_name}
+              </span>
+            )}
           </div>
         </div>
       </SidebarHeader>
@@ -75,9 +81,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter className="p-2 border-t border-border">
-        <SidebarMenu>
+        <SidebarMenu className="gap-1">
           <SidebarMenuItem>
-            <SidebarMenuButton className="text-muted-foreground hover:text-destructive transition-colors">
+            <SidebarMenuButton
+              asChild
+              tooltip="Account"
+              isActive={pathname === "/dashboard/account"}
+              className="h-10 data-[active=true]:bg-primary/10 data-[active=true]:text-primary"
+            >
+              <Link href="/dashboard/account">
+                <Settings className="w-5 h-5" />
+                <span className="font-medium">Account</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => logout()}
+              className="text-muted-foreground hover:text-destructive transition-colors h-10"
+            >
               <LogOut className="w-5 h-5" />
               <span>Log out</span>
             </SidebarMenuButton>

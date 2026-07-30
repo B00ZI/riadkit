@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\ItemAvailabilityChanged;
+use App\Events\NewNotification;
 use App\Http\Controllers\Controller;
 use App\Models\MenuItem;
+use App\Models\Notification;
+use App\Services\ImageUploadService;
 use Illuminate\Http\Request;
 
 class MenuItemController extends Controller
@@ -24,7 +28,8 @@ class MenuItemController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
-            'image_url' => 'nullable|url',
+            'image_url' => 'nullable|string',
+            'image_public_id' => 'nullable|string',
             'is_available' => 'boolean',
         ]);
 
@@ -37,19 +42,25 @@ class MenuItemController extends Controller
         $validated['riad_id'] = $request->user()->riad_id;
         $menuItem = MenuItem::create($validated);
 
+        // Notification
+        $notification = Notification::create([
+            'riad_id' => $request->user()->riad_id,
+            'type' => 'menu_item_created',
+            'title' => 'New Menu Item Added',
+            'description' => "{$menuItem->name} added to the menu.",
+            'data' => [
+                'entity_type' => 'menu_item',
+                'entity_id' => $menuItem->id,
+                'name' => $menuItem->name,
+            ],
+        ]);
+        NewNotification::dispatch($notification);
+
         return response()->json($menuItem, 201);
     }
 
     public function update(Request $request, MenuItem $menuItem)
     {
-
-        \Log::debug('Menu item update check', [
-            'auth_user_id' => $request->user()->id,
-            'auth_user_riad' => $request->user()->riad_id,
-            'menu_item_id' => $menuItem->id,
-            'menu_item_riad' => $menuItem->riad_id,
-            'compare' => $menuItem->riad_id !== $request->user()->riad_id,
-        ]);
         if ($menuItem->riad_id !== $request->user()->riad_id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -59,7 +70,8 @@ class MenuItemController extends Controller
             'name' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
             'price' => 'sometimes|required|numeric|min:0',
-            'image_url' => 'nullable|url',
+            'image_url' => 'nullable|string',
+            'image_public_id' => 'nullable|string',
             'is_available' => 'boolean',
         ]);
 
@@ -70,7 +82,39 @@ class MenuItemController extends Controller
             }
         }
 
+        $wasAvailable = $menuItem->is_available;
+        $oldImagePublicId = $menuItem->image_public_id;
         $menuItem->update($validated);
+
+        if ($oldImagePublicId && (!$menuItem->image_public_id || $menuItem->image_public_id !== $oldImagePublicId)) {
+            app(ImageUploadService::class)->delete($oldImagePublicId);
+        }
+
+        if (array_key_exists('is_available', $validated) && $wasAvailable !== $menuItem->is_available) {
+            ItemAvailabilityChanged::dispatch('menu', $menuItem->id, $menuItem->name, $menuItem->is_available, $request->user()->riad_id);
+            $type = $menuItem->is_available ? 'menu_item_restocked' : 'menu_item_out_of_stock';
+            $title = $menuItem->is_available ? 'Menu Item Restocked' : 'Menu Item Out of Stock';
+            $desc = $menuItem->is_available
+                ? "{$menuItem->name} is now available."
+                : "{$menuItem->name} is no longer available.";
+        } else {
+            $type = 'menu_item_updated';
+            $title = 'Menu Item Updated';
+            $desc = "{$menuItem->name} has been updated.";
+        }
+
+        $notification = Notification::create([
+            'riad_id' => $request->user()->riad_id,
+            'type' => $type,
+            'title' => $title,
+            'description' => $desc,
+            'data' => [
+                'entity_type' => 'menu_item',
+                'entity_id' => $menuItem->id,
+                'name' => $menuItem->name,
+            ],
+        ]);
+        NewNotification::dispatch($notification);
 
         return response()->json($menuItem);
     }
@@ -81,7 +125,27 @@ class MenuItemController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        $name = $menuItem->name;
+
+        if ($menuItem->image_public_id) {
+            app(ImageUploadService::class)->delete($menuItem->image_public_id);
+        }
+
         $menuItem->delete();
+
+        // Notification
+        $notification = Notification::create([
+            'riad_id' => $request->user()->riad_id,
+            'type' => 'menu_item_deleted',
+            'title' => 'Menu Item Removed',
+            'description' => "{$name} has been removed from the menu.",
+            'data' => [
+                'entity_type' => 'menu_item',
+                'entity_id' => null,
+                'name' => $name,
+            ],
+        ]);
+        NewNotification::dispatch($notification);
 
         return response()->json(['message' => 'Menu item deleted successfully']);
     }

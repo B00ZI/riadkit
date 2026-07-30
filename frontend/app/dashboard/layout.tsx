@@ -16,6 +16,8 @@ import {
 // 1. Import TooltipProvider
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { RoleGuard } from '@/components/RoleGuard';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { NotificationDrawerProvider } from '@/hooks/useNotificationDrawer';
 export default function DashboardLayout({
   children,
 }: {
@@ -27,32 +29,38 @@ export default function DashboardLayout({
     <TooltipProvider>
       <SidebarProvider>
         <div className="flex min-h-screen w-full bg-background">
-          <AppSidebar />
-          <SidebarInset>
-            <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border bg-card px-4 sticky top-0 z-10">
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 h-4" />
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem className="hidden md:block text-muted-foreground">
-                    <BreadcrumbLink href="/dashboard">Owner</BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator className="hidden md:block" />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage className="font-bold text-foreground">
-                      Overview
-                    </BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-            </header>
+          <NotificationDrawerProvider>
+            <AppSidebar />
+            <SidebarInset>
+              <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border bg-card px-4 sticky top-0 z-10">
+                <SidebarTrigger className="-ml-1" />
+                <Separator orientation="vertical" className="mr-2 h-4" />
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    <BreadcrumbItem className="hidden md:block text-muted-foreground">
+                      <BreadcrumbLink href="/dashboard">Owner</BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator className="hidden md:block" />
+                    <BreadcrumbItem>
+                      <BreadcrumbPage className="font-bold text-foreground">
+                        Overview
+                      </BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
 
-            <main className="flex-1 overflow-y-auto p-6 md:p-8">
-              <div className="max-w-7xl mx-auto">
-                {children}
-              </div>
-            </main>
-          </SidebarInset>
+                <div className="ml-auto flex items-center gap-2">
+                  <NotificationBell />
+                </div>
+              </header>
+
+              <main className="flex-1 overflow-y-auto p-6 md:p-8">
+                <div className="max-w-7xl mx-auto">
+                  {children}
+                </div>
+              </main>
+            </SidebarInset>
+          </NotificationDrawerProvider>
         </div>
       </SidebarProvider>
     </TooltipProvider>

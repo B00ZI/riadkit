@@ -5,16 +5,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  GripVertical,
+  ChevronDown,
+  ChevronRight,
   Plus,
   Pencil,
   Trash2,
-  CheckCircle2,
-  XCircle,
+  Eye,
+  EyeOff,
   UtensilsCrossed,
   Loader2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 interface MenuTabProps {
   categories: Category[];
@@ -36,16 +37,21 @@ export function MenuTab({
   onToggleAvailability,
 }: MenuTabProps) {
   const [togglingId, setTogglingId] = useState<number | null>(null);
+  const [collapsed, setCollapsed] = useState<Record<number, boolean>>({});
 
   const menuCategories = categories.filter((c) => c.type === "menu");
 
-  const handleToggleStock = async (item: MenuItem) => {
+  const toggleCollapse = useCallback((catId: number) => {
+    setCollapsed((prev) => ({ ...prev, [catId]: !prev[catId] }));
+  }, []);
+
+  const handleToggleVisibility = async (item: MenuItem) => {
     if (!onToggleAvailability) return;
     setTogglingId(item.id);
     try {
       await onToggleAvailability(item.id, !item.is_available);
     } catch (err) {
-      console.error("Failed to toggle availability", err);
+      // Ignore
     } finally {
       setTogglingId(null);
     }
@@ -91,13 +97,24 @@ export function MenuTab({
       ) : (
         menuCategories.map((cat) => {
           const items = menuItems.filter((i) => i.category_id === cat.id);
+          const isCollapsed = collapsed[cat.id] !== false;
 
           return (
             <Card key={cat.id} className="bg-card border-border shadow-sm overflow-hidden">
               {/* Category Header */}
-              <div className="flex items-center justify-between px-4 py-3 bg-muted/40 border-b border-border">
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => toggleCollapse(cat.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleCollapse(cat.id); } }}
+                className="w-full flex items-center justify-between px-4 py-3 bg-muted/40 border-b border-border hover:bg-muted/60 transition-colors text-left cursor-pointer"
+              >
                 <div className="flex items-center gap-2.5">
-                  <GripVertical className="w-4 h-4 text-muted-foreground/40 cursor-grab" />
+                  {isCollapsed ? (
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/60" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 text-muted-foreground/60" />
+                  )}
                   <span className="font-black text-sm uppercase tracking-tight text-foreground">
                     {cat.name}
                   </span>
@@ -106,128 +123,127 @@ export function MenuTab({
                   </Badge>
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => onDeleteCategory(cat.id, cat.name)}
                     className="h-8 text-xs font-bold text-muted-foreground hover:text-destructive hover:bg-destructive/10 px-2.5"
                   >
-                    <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete Category
+                    <Trash2 className="w-3.5 h-3.5 mr-1" /> Delete
                   </Button>
                 </div>
               </div>
 
               {/* Items List */}
-              <div className="p-3 space-y-2">
-                {items.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-muted-foreground border border-dashed rounded-lg bg-muted/10">
-                    No items in this category yet.
-                  </div>
-                ) : (
-                  items.map((item) => {
-                    const isAvailable = item.is_available ?? true;
-                    const isToggling = togglingId === item.id;
+              {!isCollapsed && (
+                <div className="p-3 space-y-2">
+                  {items.length === 0 ? (
+                    <div className="p-6 text-center text-xs text-muted-foreground border border-dashed rounded-lg bg-muted/10">
+                      No items in this category yet.
+                    </div>
+                  ) : (
+                    items.map((item) => {
+                      const isVisible = item.is_available ?? true;
+                      const isToggling = togglingId === item.id;
 
-                    return (
-                      <div
-                        key={item.id}
-                        className={`flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-lg border transition-all gap-3 ${
-                          isAvailable
-                            ? "bg-card border-border/80 hover:border-primary/40 shadow-2xs"
-                            : "bg-muted/20 border-border/40 opacity-70"
-                        }`}
-                      >
-                        {/* Item Info */}
-                        <div className="flex items-start gap-3 min-w-0">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-bold text-foreground truncate">
-                                {item.name}
-                              </span>
-                              {!isAvailable && (
-                                <Badge variant="destructive" className="text-[9px] font-black uppercase px-1.5 py-0">
-                                  Out of stock
-                                </Badge>
+                      return (
+                        <div
+                          key={item.id}
+                          className={`flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-lg border transition-all gap-3 animate-in fade-in duration-300 ${
+                            isVisible
+                              ? "bg-card border-border/80 hover:border-primary/40 shadow-2xs"
+                              : "bg-muted/20 border-border/40 opacity-60"
+                          }`}
+                        >
+                          <div className="flex items-start gap-3 min-w-0 flex-1">
+                            {item.image_url && (
+                              <img
+                                src={item.image_url}
+                                alt={item.name}
+                                className="w-12 h-12 rounded-lg object-cover shrink-0"
+                              />
+                            )}
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-foreground truncate">
+                                  {item.name}
+                                </span>
+                                {!isVisible && (
+                                  <Badge variant="destructive" className="text-[9px] font-black uppercase px-1.5 py-0">
+                                    Hidden
+                                  </Badge>
+                                )}
+                              </div>
+                              {item.description && (
+                                <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                                  {item.description}
+                                </p>
                               )}
                             </div>
-                            {item.description && (
-                              <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                                {item.description}
-                              </p>
-                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-border/50">
+                            <span className="text-sm font-black text-primary bg-primary/10 px-2.5 py-1 rounded-md">
+                              {item.price} MAD
+                            </span>
+
+                            <div className="flex items-center gap-1.5">
+                              <Button
+                                size="sm"
+                                variant={isVisible ? "outline" : "secondary"}
+                                disabled={isToggling}
+                                onClick={() => handleToggleVisibility(item)}
+                                className={`h-8 text-[11px] font-black uppercase px-2.5 ${
+                                  isVisible
+                                    ? "hover:bg-amber-50 hover:text-amber-600 hover:border-amber-300 dark:hover:bg-amber-950/30"
+                                    : "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                }`}
+                              >
+                                {isToggling ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : isVisible ? (
+                                  <><EyeOff className="w-3.5 h-3.5 mr-1" /> Hide</>
+                                ) : (
+                                  <><Eye className="w-3.5 h-3.5 mr-1" /> Show</>
+                                )}
+                              </Button>
+
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => onOpenItemDialog(item)}
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
+                                title="Edit item"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </Button>
+
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => onDeleteMenuItem(item.id, item.name)}
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:border-destructive/50 hover:bg-destructive/10"
+                                title="Delete item"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
+                      );
+                    })
+                  )}
 
-                        {/* Right Actions & Price Row */}
-                        <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-border/50">
-                          <span className="text-sm font-black text-primary bg-primary/10 px-2.5 py-1 rounded-md">
-                            {item.price} MAD
-                          </span>
-
-                          <div className="flex items-center gap-1.5">
-                            {/* Stock Toggle Button */}
-                            <Button
-                              size="sm"
-                              variant={isAvailable ? "outline" : "secondary"}
-                              disabled={isToggling}
-                              onClick={() => handleToggleStock(item)}
-                              className={`h-8 text-[11px] font-black uppercase px-2.5 ${
-                                isAvailable
-                                  ? "hover:bg-amber-50 hover:text-amber-600 hover:border-amber-300 dark:hover:bg-amber-950/30"
-                                  : "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400"
-                              }`}
-                            >
-                              {isToggling ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : isAvailable ? (
-                                <>
-                                  <XCircle className="w-3.5 h-3.5 mr-1 text-amber-500" /> Mark Out
-                                </>
-                              ) : (
-                                <>
-                                  <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-600" /> Restock
-                                </>
-                              )}
-                            </Button>
-
-                            {/* Edit Button */}
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => onOpenItemDialog(item)}
-                              className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
-                              title="Edit item"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </Button>
-
-                            {/* Delete Button */}
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => onDeleteMenuItem(item.id, item.name)}
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:border-destructive/50 hover:bg-destructive/10"
-                              title="Delete item"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-
-                {/* Add Item Button */}
-                <Button
-                  variant="outline"
-                  className="w-full h-9 border-dashed text-xs font-black uppercase mt-3 hover:border-primary hover:text-primary transition-colors"
-                  onClick={() => onOpenItemDialog(undefined, cat.id)}
-                >
-                  <Plus className="w-3.5 h-3.5 mr-1.5" /> Add item to {cat.name}
-                </Button>
-              </div>
+                  <Button
+                    variant="outline"
+                    className="w-full h-9 border-dashed text-xs font-black uppercase mt-3 hover:border-primary hover:text-primary transition-colors"
+                    onClick={() => onOpenItemDialog(undefined, cat.id)}
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1.5" /> Add item to {cat.name}
+                  </Button>
+                </div>
+              )}
             </Card>
           );
         })

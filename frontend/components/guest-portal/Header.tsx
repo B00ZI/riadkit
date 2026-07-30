@@ -9,6 +9,7 @@ interface HeaderProps {
   roomNumber: string;
   isExpired: boolean;
   whatsappNumber?: string;
+  logoUrl?: string;
   onWhatsAppClick: () => void;
 }
 
@@ -17,13 +18,18 @@ export const Header = ({
   roomNumber,
   isExpired,
   whatsappNumber,
+  logoUrl,
   onWhatsAppClick,
 }: HeaderProps) => (
   <header className="px-6 pt-6 pb-4 flex justify-between items-center shrink-0 w-full bg-background/80 backdrop-blur-md border-b border-border/40 z-20">
     <div className="flex items-center gap-3">
-      <div className="w-9 h-9 bg-primary text-primary-foreground rounded-xl flex items-center justify-center font-black text-lg italic shadow-md shadow-primary/20">
-        {riadName?.charAt(0) || "R"}
-      </div>
+      {logoUrl ? (
+        <img src={logoUrl} alt={riadName} className="w-9 h-9 rounded-xl object-cover shadow-md" />
+      ) : (
+        <div className="w-9 h-9 bg-primary text-primary-foreground rounded-xl flex items-center justify-center font-black text-lg italic shadow-md shadow-primary/20">
+          {riadName?.charAt(0) || "R"}
+        </div>
+      )}
       <div>
         <h1 className="font-black text-xs uppercase tracking-wider text-foreground line-clamp-1">
           {riadName}

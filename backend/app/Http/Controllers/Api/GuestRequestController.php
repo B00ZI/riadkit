@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\NewNotification;
 use App\Http\Controllers\Controller;
 use App\Models\Excursion;
 use App\Models\GuestRequest;
 use App\Models\MenuItem;
+use App\Models\Notification;
 use App\Models\Room;
 use App\Models\Service;
 use Illuminate\Http\Request;
@@ -48,40 +50,10 @@ class GuestRequestController extends Controller
 
         $requests = $query->get();
 
-        // ─── 5. BULK LOAD ITEM DATA (ELIMINATES N+1) ──────────
-        $menuIds = [];
-        $serviceIds = [];
-        $excursionIds = [];
-
-        foreach ($requests as $req) {
-            if ($req->type === 'menu') {
-                $menuIds[] = $req->item_id;
-            } elseif ($req->type === 'service') {
-                $serviceIds[] = $req->item_id;
-            } elseif ($req->type === 'excursion') {
-                $excursionIds[] = $req->item_id;
-            }
-        }
-
-        $menuItems   = MenuItem::whereIn('id', $menuIds)->get()->keyBy('id');
-        $services    = Service::whereIn('id', $serviceIds)->get()->keyBy('id');
-        $excursions  = Excursion::whereIn('id', $excursionIds)->get()->keyBy('id');
-
-        // ─── 6. MAP TO FRONTEND FORMAT ────────────────────────
-        $mappedRequests = $requests->map(function ($req) use ($menuItems, $services, $excursions) {
-            $item = null;
-
-            if ($req->type === 'menu') {
-                $item = $menuItems->get($req->item_id);
-            } elseif ($req->type === 'service') {
-                $item = $services->get($req->item_id);
-            } elseif ($req->type === 'excursion') {
-                $item = $excursions->get($req->item_id);
-            }
-
-            $itemName = $item?->name ?? 'Deleted Item';
-            $itemPrice = (float) ($item?->price ?? 0);
-            $totalPrice = $itemPrice * (int) $req->quantity;
+        // ─── 5. MAP TO FRONTEND FORMAT ────────────────────────
+        $mappedRequests = $requests->map(function ($req) {
+            $itemName = $req->item_name ?? 'Deleted Item';
+            $totalPrice = (float) ($req->total_price ?? 0);
 
             return [
                 'id'             => $req->id,
@@ -100,18 +72,57 @@ class GuestRequestController extends Controller
         return response()->json($mappedRequests);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, GuestRequest $guestRequest)
     {
-        $guestRequest = $request->user()->riad->guestRequests()->findOrFail($id);
+        if ($guestRequest->riad_id !== $request->user()->riad_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        $oldStatus = $guestRequest->status;
 
         $validated = $request->validate([
             'status' => 'required|in:pending,in_progress,completed,cancelled',
         ]);
 
-        $guestRequest->update(['status' => $validated['status']]);
+        $updateData = ['status' => $validated['status']];
+        if ($validated['status'] === 'completed') {
+            $updateData['completed_at'] = now();
+        }
+        $guestRequest->update($updateData);
 
         // ⚡ BROADCAST: Notify WebSocket listeners of request status update
-        RequestUpdated::dispatch($guestRequest);
+        RequestUpdated::dispatch($guestRequest, $oldStatus);
+
+        $itemName = $guestRequest->item_name ?? 'Request';
+        $itemTypeLabel = match ($guestRequest->type) {
+            'menu' => 'Food',
+            'service' => 'Service',
+            'excursion' => 'Excursion',
+            default => 'Order',
+        };
+
+        [$notifType, $notifTitle] = match ($validated['status']) {
+            'in_progress' => ['order_in_progress', "{$itemTypeLabel} In Progress"],
+            'completed' => ['order_completed', "{$itemTypeLabel} Completed"],
+            'cancelled' => ['order_cancelled', "{$itemTypeLabel} Cancelled"],
+            default => [null, null],
+        };
+
+        if ($notifType) {
+            $notification = Notification::create([
+                'riad_id' => $guestRequest->riad_id,
+                'type' => $notifType,
+                'title' => $notifTitle,
+                'description' => "Room {$guestRequest->room->room_number} — {$itemName}",
+                'data' => [
+                    'entity_type' => 'guest_request',
+                    'entity_id' => $guestRequest->id,
+                    'room_number' => $guestRequest->room->room_number,
+                    'item_name' => $itemName,
+                    'status' => $validated['status'],
+                ],
+            ]);
+            NewNotification::dispatch($notification);
+        }
 
         return response()->json(['message' => 'Status updated']);
     }
@@ -134,21 +145,40 @@ class GuestRequestController extends Controller
             return response()->json(['message' => 'Invalid QR Token'], 404);
         }
 
-        // 2. �️ STICKY TOKEN DEFENSE
+        // 2. STICKY TOKEN DEFENSE
         if ($room->session_status !== 'active' || $room->current_session_id !== $validated['session_id']) {
             return response()->json([
                 'message' => 'Session expired. Please scan the current room QR code to place requests.',
             ], 403);
         }
 
-        // 3. Create the Request
+        // 3. Look up the item to snapshot price and name
+        $item = match ($validated['type']) {
+            'menu' => MenuItem::find($validated['item_id']),
+            'service' => Service::find($validated['item_id']),
+            'excursion' => Excursion::find($validated['item_id']),
+            default => null,
+        };
+
+        if (! $item) {
+            return response()->json(['message' => 'Item not found'], 404);
+        }
+
+        $quantity = $validated['quantity'] ?? 1;
+        $unitPrice = (float) ($item->price ?? 0);
+        $totalPrice = $unitPrice * $quantity;
+
+        // 4. Create the Request with price snapshot
         $guestRequest = GuestRequest::create([
             'riad_id' => $room->riad_id,
             'room_id' => $room->id,
             'session_id' => $room->current_session_id,
             'type' => $validated['type'],
             'item_id' => $validated['item_id'],
-            'quantity' => $validated['quantity'] ?? 1,
+            'item_name' => $item->name,
+            'unit_price' => $unitPrice,
+            'quantity' => $quantity,
+            'total_price' => $totalPrice,
             'notes' => $validated['notes'] ?? null,
             'status' => 'pending',
         ]);
@@ -158,6 +188,31 @@ class GuestRequestController extends Controller
 
         // ⚡ BROADCAST: Dispatch new request event to Reverb
         RequestCreated::dispatch($guestRequest);
+
+        // Notification
+        $itemName = $guestRequest->item_name ?? 'Request';
+
+        [$notifType, $notifTitle] = match ($guestRequest->type) {
+            'menu' => ['new_menu_order', 'New Food Order'],
+            'service' => ['new_service_order', 'New Service Request'],
+            'excursion' => ['new_excursion_order', 'New Excursion Booking'],
+            default => ['new_order', 'New Request'],
+        };
+
+        $notification = Notification::create([
+            'riad_id' => $room->riad_id,
+            'type' => $notifType,
+            'title' => $notifTitle,
+            'description' => "Room {$room->room_number} requested {$quantity}× {$itemName}.",
+            'data' => [
+                'entity_type' => 'guest_request',
+                'entity_id' => $guestRequest->id,
+                'room_number' => $room->room_number,
+                'item_name' => $itemName,
+                'quantity' => $quantity,
+            ],
+        ]);
+        NewNotification::dispatch($notification);
 
         return response()->json([
             'message' => 'Request received successfully',
