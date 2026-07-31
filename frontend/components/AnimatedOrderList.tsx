@@ -2,7 +2,6 @@
 
 import {
   useState,
-  useRef,
   useCallback,
   useLayoutEffect,
   type ReactElement,
@@ -32,8 +31,7 @@ export function AnimatedOrderList<T extends OrderItem>({
 }: AnimatedOrderListProps<T>) {
   const [leavingIds, setLeavingIds] = useState<Set<number>>(new Set());
   const [collapsingIds, setCollapsingIds] = useState<Set<number>>(new Set());
-  const heightsRef = useRef<Map<number, number>>(new Map());
-  const [, forceUpdate] = useState(0);
+  const [heights, setHeights] = useState<Map<number, number>>(new Map());
 
   const filtered = orders.filter((o) => o.status === filterStatus);
 
@@ -56,7 +54,11 @@ export function AnimatedOrderList<T extends OrderItem>({
           next.delete(id);
           return next;
         });
-        heightsRef.current.delete(id);
+        setHeights((prev) => {
+          const next = new Map(prev);
+          next.delete(id);
+          return next;
+        });
         onStatusChange(id, newStatus);
       }, 550);
     },
@@ -65,19 +67,19 @@ export function AnimatedOrderList<T extends OrderItem>({
 
   // Measure heights of cards that haven't been measured yet
   useLayoutEffect(() => {
-    let changed = false;
     filtered.forEach((order) => {
-      if (!heightsRef.current.has(order.id)) {
-        const el = document.querySelector<HTMLElement>(
-          `[data-order-id="${order.id}"]`
-        );
-        if (el) {
-          heightsRef.current.set(order.id, el.offsetHeight);
-          changed = true;
-        }
+      const el = document.querySelector<HTMLElement>(
+        `[data-order-id="${order.id}"]`
+      );
+      if (el) {
+        setHeights((prev) => {
+          if (prev.has(order.id)) return prev;
+          const next = new Map(prev);
+          next.set(order.id, el.offsetHeight);
+          return next;
+        });
       }
     });
-    if (changed) forceUpdate((n) => n + 1);
   }, [filtered]);
 
   // Display: items matching filter + items still animating out
@@ -90,7 +92,7 @@ export function AnimatedOrderList<T extends OrderItem>({
       {displayOrders.map((order) => {
         const isLeaving = leavingIds.has(order.id);
         const isCollapsing = collapsingIds.has(order.id);
-        const h = heightsRef.current.get(order.id);
+        const h = heights.get(order.id);
 
         return (
           <div
@@ -118,9 +120,9 @@ export function AnimatedOrderList<T extends OrderItem>({
       })}
 
       {displayOrders.length === 0 && (
-        <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 mt-4 border border-dashed border-border rounded-xl bg-card/50">
+        <div className="flex flex-col items-center justify-center text-center gap-1.5 py-12 border border-dashed border-border rounded-xl bg-card/50 px-6">
           {emptyIcon}
-          <p className="text-sm font-medium">{emptyMessage}</p>
+          <p className="text-sm font-semibold text-foreground">{emptyMessage}</p>
         </div>
       )}
     </div>
