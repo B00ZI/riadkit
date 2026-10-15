@@ -429,7 +429,7 @@ dependency-free for performance (≈37 KB CSS + 9.5 KB JS, zero framework, zero 
 - `css/styles.css` is generated (`npm run build` in `landingpage/`; use `npm.cmd` on Windows/PowerShell).
   Never edit it by hand.
 - Design tokens mirror the app's palette (ivory `#FAF8F5`, primary `#A63D40`, sand `#E9D8C5`).
-- All three "Log in" links point at the real app: `https://app.riadkit.com/login` — update if the
+- All three "Log in" links point at the real app: `https://riadkit.vercel.app/login` — update if the
   production frontend domain differs.
 - The demo-request form is client-side only; wiring it to a Laravel endpoint is a known TODO.
 - Next.js serves only app routes (`/login`, `/register`, `/dashboard`, `/reception`, `/room/[token]`,

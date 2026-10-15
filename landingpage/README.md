@@ -14,7 +14,7 @@ self-hosted).
 
 > **Status:** not wired to any backend. The demo-request form is a front-end preview only —
 > see [Known gaps](#known-gaps--todo). "Log in" links point at the real app
-> (`https://app.riadkit.com/login`).
+> (`https://riadkit.vercel.app/login`).
 
 ## Run it
 
@@ -87,13 +87,10 @@ App screenshots in `assets/images/` are RiadKit's own. Fonts: Manrope, SIL Open 
 
 ## Known gaps / TODO
 
-1. **Login links assume a production domain** — all three point to
-   `https://app.riadkit.com/login` (the real app). Confirm/replace with the final frontend URL
-   before launch.
-2. **Demo form has no backend** — wire to a Laravel endpoint, then restore real confirmation copy.
-3. **`og:image` domain is a placeholder** (`https://riadkit.app/...`) — must be replaced with the
+1. **Demo form has no backend** — wire to a Laravel endpoint, then restore real confirmation copy.
+2. **`og:image` domain is a placeholder** (`https://riadkit.app/...`) — must be replaced with the
    real production URL before launch; scrapers need an absolute URL.
-4. **Photo attribution** — see above; revisit before going public.
+3. **Photo attribution** — see above; revisit before going public.
 
 ### Notes for working here
 
