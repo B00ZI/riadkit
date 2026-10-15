@@ -47,6 +47,16 @@ in a file that isn't listed there will silently never be emitted. Keep every shi
 **Deploy only:** `index.html`, `css/`, `js/`, `assets/` (deploy the whole folder — see the
 repo's `DEPLOYMENT.md`). Never ship `node_modules/`, `src/`, `package.json`, `tailwind.config.js` — unused at runtime.
 
+## Deployment
+
+Deploys automatically via **GitHub Pages**: the `.github/workflows/deploy-landing.yml` workflow
+runs on every push to `main` that touches `landingpage/**`, stages only the runtime files
+(`index.html`, `css/`, `js/`, `assets/`) and publishes them.
+Live at: `https://b00zi.github.io/riadkit/`
+
+> Pages source must stay **Settings → Pages → Source: GitHub Actions** (not "Deploy from a
+> branch" — a branch deploy would build the whole monorepo root and 404).
+
 ## Design system
 
 Tokens live in `tailwind.config.js`. Key colours:
