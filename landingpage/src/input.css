@@ -1,0 +1,204 @@
+@import "./fonts.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-ivory text-ink font-sans antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    @apply bg-primary/15 text-ink;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary/70 ring-offset-2 ring-offset-ivory;
+  }
+  .dark-surface :focus-visible {
+    @apply ring-sand/70 ring-offset-night;
+  }
+}
+
+@layer components {
+  /* ---------- Shell ---------- */
+  .shell {
+    @apply mx-auto w-full max-w-shell px-5 sm:px-8;
+  }
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-primary;
+  }
+  .eyebrow::before {
+    content: "";
+    @apply h-px w-6 bg-primary/50;
+  }
+  .eyebrow-on-dark {
+    @apply text-sand;
+  }
+  .eyebrow-on-dark::before {
+    @apply bg-sand/40;
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-primary {
+    @apply btn bg-primary text-white shadow-[0_10px_24px_-12px_rgba(166,61,64,.8)] hover:bg-primary-dark hover:-translate-y-0.5 active:translate-y-0;
+  }
+  .btn-secondary {
+    @apply btn border border-line bg-white/70 text-ink hover:border-sand-dark hover:bg-white hover:-translate-y-0.5;
+  }
+  .btn-ghost-light {
+    @apply btn border border-white/25 text-white hover:bg-white/10 hover:-translate-y-0.5;
+  }
+  .btn-sand {
+    @apply btn bg-sand text-night hover:bg-sand-light hover:-translate-y-0.5;
+  }
+
+  /* ---------- Cards ---------- */
+  .card {
+    @apply rounded-3xl border border-line bg-white shadow-card;
+  }
+
+  /* ---------- Moroccan geometric motifs (subtle) ---------- */
+  .pattern-zellige {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='84' viewBox='0 0 84 84'%3E%3Cg fill='none' stroke='%23A63D40' stroke-width='1' stroke-opacity='.16'%3E%3Cpath d='M42 6 54 18 66 30 54 42 66 54 54 66 42 78 30 66 18 54 30 42 18 30 30 18Z'/%3E%3Ccircle cx='42' cy='42' r='6'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  .pattern-zellige-light {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='84' viewBox='0 0 84 84'%3E%3Cg fill='none' stroke='%23E9D8C5' stroke-width='1' stroke-opacity='.22'%3E%3Cpath d='M42 6 54 18 66 30 54 42 66 54 54 66 42 78 30 66 18 54 30 42 18 30 30 18Z'/%3E%3Ccircle cx='42' cy='42' r='6'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  .pattern-arches {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23A63D40' stroke-opacity='.14' stroke-width='1.2'%3E%3Cpath d='M10 110V60a25 25 0 0 1 50 0v50'/%3E%3Cpath d='M60 110V60a25 25 0 0 1 50 0v50'/%3E%3Cpath d='M35 110V85a25 25 0 0 1 50 0v25'/%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  /* ---------- Phone mockup ---------- */
+  .phone {
+    @apply relative w-[280px] rounded-[2.75rem] border border-night/10 bg-night p-2.5 shadow-phone;
+  }
+  .phone-screen {
+    @apply relative overflow-hidden rounded-[2.25rem] bg-ivory;
+  }
+  .phone-notch {
+    @apply absolute left-1/2 top-2 z-20 h-5 w-24 -translate-x-1/2 rounded-full bg-night;
+  }
+
+  /* ---------- Reveal animation ----------
+     The hidden state is gated behind `.js` on <html> (set by an inline script in
+     the head). Without JS the inline script never runs, `.js` never appears, and
+     every element stays fully visible — the animation is enhancement only. */
+  .js .reveal {
+    opacity: 0;
+    transform: translateY(22px);
+    transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  .js .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* ---------- Accordion ---------- */
+  /* `visibility: hidden` is what actually removes a collapsed answer from the
+     accessibility tree and the tab order — `grid-template-rows: 0fr` alone only
+     hides it visually. The delayed `visibility` transition lets the collapse
+     animation finish before the content disappears. */
+  .faq-answer {
+    display: grid;
+    grid-template-rows: 0fr;
+    visibility: hidden;
+    transition: grid-template-rows 0.35s ease, visibility 0s linear 0.35s;
+  }
+  .faq-item.is-open .faq-answer {
+    grid-template-rows: 1fr;
+    visibility: visible;
+    transition: grid-template-rows 0.35s ease, visibility 0s;
+  }
+  .faq-answer > div {
+    overflow: hidden;
+  }
+  .faq-item.is-open .faq-icon {
+    transform: rotate(45deg);
+  }
+
+  /* ---------- Misc ---------- */
+  .nav-link {
+    @apply relative text-sm font-semibold text-ink/70 transition-colors hover:text-primary;
+  }
+  .nav-link::after {
+    content: "";
+    @apply absolute -bottom-1.5 left-0 h-0.5 w-0 rounded-full bg-primary transition-all duration-300;
+  }
+  .nav-link:hover::after,
+  .nav-link.is-active::after {
+    @apply w-full;
+  }
+
+  /* ---------- Navbar scrolled state ---------- */
+  #site-nav.nav-scrolled {
+    background: rgba(250, 248, 245, 0.82);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid #eee6dd;
+    box-shadow: 0 12px 32px -24px rgba(43, 43, 43, 0.45);
+  }
+  #mobile-menu {
+    max-height: calc(100vh - 5rem);
+    overflow-y: auto;
+  }
+  /* Without JS the toggle button can't work, so don't show a button that goes
+     nowhere: hide it and leave the menu open as plain links. */
+  .js #mobile-menu {
+    display: none;
+  }
+  .js #mobile-menu.is-open {
+    display: block;
+  }
+  html:not(.js) #menu-button {
+    display: none;
+  }
+  body.menu-open {
+    overflow: hidden;
+  }
+
+  /* ---------- Demo tabs ---------- */
+  [role="tab"] {
+    color: #666666;
+  }
+  [role="tab"]:hover {
+    color: #a63d40;
+    background: #fbf1f1;
+  }
+  [role="tab"][aria-selected="true"] {
+    background: #a63d40;
+    color: #ffffff;
+    box-shadow: 0 8px 18px -12px rgba(166, 61, 64, 0.9);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .js .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}

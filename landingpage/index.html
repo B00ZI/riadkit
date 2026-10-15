@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RiadKit — A better stay starts with a simpler experience</title>
+    <meta
+      name="description"
+      content="RiadKit gives every guest instant access to your riad's Wi-Fi, services, recommendations and requests through one simple QR code — and gives your team one dashboard to handle it all."
+    />
+    <meta name="theme-color" content="#FAF8F5" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23A63D40'/%3E%3Cpath d='M9 26V16a7 7 0 0 1 14 0v10' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M13.5 26v-4.5M18.5 26v-4.5' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='13' r='2' fill='%23fff'/%3E%3C/svg%3E"
+    />
+    <script>
+      document.documentElement.classList.add("js");
+    </script>
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="RiadKit" />
+    <meta property="og:title" content="RiadKit — A better stay starts with a simpler experience" />
+    <meta
+      property="og:description"
+      content="The digital guest experience platform for Moroccan riads: one QR code for guests, one dashboard for your team."
+    />
+    <!-- TODO: replace the domain below with RiadKit's real production URL before launch.
+         Social scrapers (WhatsApp, LinkedIn, X, Slack…) require absolute image URLs. -->
+    <meta property="og:image" content="https://riadkit.app/assets/images/riad-courtyard.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="RiadKit — A better stay starts with a simpler experience" />
+    <meta
+      name="twitter:description"
+      content="The digital guest experience platform for Moroccan riads: one QR code for guests, one dashboard for your team."
+    />
+    <meta name="twitter:image" content="https://riadkit.app/assets/images/riad-courtyard.jpg" />
+
+    <link rel="preload" href="assets/fonts/manrope-700-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/fonts/manrope-800-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script defer src="js/main.js"></script>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "RiadKit",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "description": "Digital guest experience and service management platform for Moroccan riads."
+      }
+    </script>
+  </head>
+
+  <body>
+    <!-- ============================= NAVBAR ============================= -->
+    <header
+      id="site-nav"
+      class="fixed inset-x-0 top-0 z-50 transition-all duration-300"
+    >
+      <div class="shell flex h-20 items-center justify-between gap-6">
+        <a href="#top" class="flex shrink-0 items-center gap-2.5" aria-label="RiadKit — home">
+          <span class="grid h-10 w-10 place-items-center rounded-xl bg-primary text-white shadow-[0_8px_18px_-10px_rgba(166,61,64,.9)]">
+            <svg viewBox="0 0 32 32" class="h-6 w-6" fill="none" aria-hidden="true">
+              <path d="M7 27V15a9 9 0 0 1 18 0v12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+              <path d="M12.5 27v-6.5M19.5 27v-6.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+              <circle cx="16" cy="11.5" r="2.2" fill="currentColor" />
+            </svg>
+          </span>
+          <span class="text-lg font-extrabold tracking-tight text-ink">Riad<span class="text-primary">Kit</span></span>
+        </a>
+
+        <nav class="hidden items-center gap-8 lg:flex" aria-label="Primary">
+          <a href="#features" data-nav-link class="nav-link">Features</a>
+          <a href="#how-it-works" data-nav-link class="nav-link">How It Works</a>
+          <a href="#for-riads" data-nav-link class="nav-link">For Riads</a>
+          <a href="#faq" data-nav-link class="nav-link">FAQ</a>
+        </nav>
+
+        <div class="hidden items-center gap-3 lg:flex">
+          <a href="https://app.riadkit.com/login" class="text-sm font-semibold text-ink/70 transition-colors hover:text-primary">Log in</a>
+          <a href="#request-demo" class="btn-primary !py-2.5 !px-5">Request a Demo</a>
+        </div>
+
+        <button
+          id="menu-button"
+          type="button"
+          class="grid h-11 w-11 place-items-center rounded-xl border border-line bg-white/80 text-ink lg:hidden"
+          aria-expanded="false"
+          aria-controls="mobile-menu"
+          aria-label="Open menu"
+        >
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Mobile menu -->
+      <div id="mobile-menu" class="border-t border-line bg-ivory/95 backdrop-blur-md lg:hidden">
+        <div class="shell flex flex-col gap-1 py-5">
+          <a href="#features" class="rounded-xl px-3 py-3 text-base font-semibold text-ink hover:bg-sand-light">Features</a>
+          <a href="#how-it-works" class="rounded-xl px-3 py-3 text-base font-semibold text-ink hover:bg-sand-light">How It Works</a>
+          <a href="#for-riads" class="rounded-xl px-3 py-3 text-base font-semibold text-ink hover:bg-sand-light">For Riads</a>
+          <a href="#faq" class="rounded-xl px-3 py-3 text-base font-semibold text-ink hover:bg-sand-light">FAQ</a>
+          <div class="mt-3 flex flex-col gap-3">
+            <a href="https://app.riadkit.com/login" class="btn-secondary w-full">Log in</a>
+            <a href="#request-demo" class="btn-primary w-full">Request a Demo</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main id="top">
+      <!-- ============================= HERO ============================= -->
+      <section class="relative overflow-hidden pb-20 pt-28 sm:pb-28 sm:pt-36">
+        <!-- decorative background -->
+        <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+          <div class="absolute -right-40 -top-40 h-[36rem] w-[36rem] rounded-full bg-sand/60 blur-3xl"></div>
+          <div class="absolute -left-32 top-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl"></div>
+          <div class="pattern-zellige absolute right-0 top-0 h-72 w-72 opacity-60"></div>
+          <div class="pattern-arches absolute bottom-0 left-0 h-64 w-64 opacity-50"></div>
+        </div>
+
+        <div class="shell grid items-center gap-14 lg:grid-cols-[1.05fr_1fr] lg:gap-10">
+          <!-- Left: copy -->
+          <div class="reveal">
+            <p class="eyebrow">Digital guest experience for Moroccan riads</p>
+            <h1 class="mt-5 text-4xl font-extrabold leading-[1.05] tracking-tight text-ink text-balance sm:text-5xl xl:text-6xl">
+              A better stay starts with a
+              <span class="relative text-primary">
+                simpler experience<svg viewBox="0 0 220 12" class="absolute -bottom-2 left-0 w-full text-sand-dark" fill="none" aria-hidden="true"><path d="M3 9c48-5 148-7 214-4" stroke="currentColor" stroke-width="5" stroke-linecap="round" /></svg></span>.
+            </h1>
+            <p class="mt-6 max-w-xl text-lg leading-relaxed text-muted">
+              Give every guest instant access to everything your riad offers — from Wi-Fi and
+              local recommendations to room service and guest requests — all through one simple
+              QR code.
+            </p>
+
+            <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <a href="#platform" class="btn-primary">
+                Discover RiadKit
+                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </a>
+              <a href="#how-it-works" class="btn-secondary">See How It Works</a>
+            </div>
+
+            <p class="mt-6 flex items-center gap-2 text-sm font-medium text-muted">
+              <svg viewBox="0 0 24 24" class="h-4 w-4 text-primary" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+              No app download required. Just scan, explore, and enjoy.
+            </p>
+          </div>
+
+          <!-- Right: layered product composition -->
+          <div class="relative mx-auto flex w-full max-w-[26rem] justify-center lg:max-w-none lg:justify-end lg:pr-6">
+            <div aria-hidden="true" class="absolute inset-4 rounded-[3rem] bg-gradient-to-tr from-sand/80 via-transparent to-primary/15 blur-2xl"></div>
+
+            <!-- Floating dashboard request card -->
+            <div
+              class="reveal absolute left-0 top-6 z-20 w-48 rounded-2xl border border-line bg-white p-4 shadow-lift sm:w-52"
+              style="--reveal-delay: 350ms"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">New request · Room 4</span>
+                <span class="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
+              </div>
+              <p class="mt-2 text-sm font-bold leading-snug text-ink">Extra towels before 8 pm</p>
+              <div class="mt-3 flex items-center justify-between">
+                <span class="rounded-full bg-primary-50 px-2.5 py-1 text-[11px] font-bold text-primary">In progress</span>
+                <span class="text-[11px] font-medium text-muted">2 min ago</span>
+              </div>
+            </div>
+
+            <!-- Phone: guest portal -->
+            <div class="phone relative z-10 mx-auto animate-floatySlow">
+              <span class="phone-notch" aria-hidden="true"></span>
+              <div class="phone-screen">
+                <img
+                  src="assets/images/Welcome screen.png"
+                  alt="RiadKit welcome screen: photo of the riad with a marhaba welcome and stay description"
+                  width="367"
+                  height="807"
+                  class="block h-auto w-full"
+                />
+              </div>
+            </div>
+
+            <!-- Floating benefit labels -->
+            <span class="reveal absolute -right-2 top-0 z-20 rounded-full border border-line bg-white/95 px-3.5 py-1.5 text-xs font-bold text-ink shadow-card animate-floaty" style="--reveal-delay: 500ms">
+              Instant access
+            </span>
+            <span class="reveal absolute left-0 bottom-14 z-20 rounded-full border border-line bg-white/95 px-3.5 py-1.5 text-xs font-bold text-ink shadow-card animate-floaty" style="--reveal-delay: 700ms">
+              Guest requests
+            </span>
+            <span class="reveal absolute -bottom-4 right-0 z-20 max-w-[13rem] rounded-2xl border border-line bg-night px-4 py-2.5 text-xs font-bold leading-snug text-sand shadow-lift animate-floatySlow" style="--reveal-delay: 850ms">
+              Your riad, beautifully presented
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================= BENEFITS ============================= -->
+      <section class="border-t border-line bg-white/60 py-16 sm:py-20">
+        <div class="shell">
+          <div class="reveal max-w-2xl">
+            <p class="eyebrow">Why riads choose RiadKit</p>
+            <h2 class="mt-4 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+              Everything your guests need. Everything your team sees.
+            </h2>
+          </div>
+
+          <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <!-- card 1 -->
+            <article class="card reveal group p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lift" style="--reveal-delay: 0ms">
+              <span class="grid h-11 w-11 place-items-center rounded-2xl bg-primary-50 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+                  <rect x="3.5" y="3.5" width="6" height="6" rx="1.5" /><rect x="14.5" y="3.5" width="6" height="6" rx="1.5" />
+                  <rect x="3.5" y="14.5" width="6" height="6" rx="1.5" /><path d="M14.5 14.5h3v3M20.5 20.5h-3v-3" />
+                </svg>
+              </span>
+              <h3 class="mt-5 text-base font-extrabold text-ink">Everything in One QR Code</h3>
+              <p class="mt-2 text-sm leading-relaxed text-muted">
+                Give guests instant access to important information and services — without asking
+                them to install another app.
+              </p>
+            </article>
+
+            <!-- card 2 -->
+            <article class="card reveal group p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lift" style="--reveal-delay: 90ms">
+              <span class="grid h-11 w-11 place-items-center rounded-2xl bg-primary-50 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+                  <path d="M4 6h16M4 12h10M4 18h7" /><circle cx="18" cy="16" r="3.5" /><path d="m20.6 18.6 1.9 1.9" />
+                </svg>
+              </span>
+              <h3 class="mt-5 text-base font-extrabold text-ink">Less Friction for Your Team</h3>
+              <p class="mt-2 text-sm leading-relaxed text-muted">
+                Receive guest requests in one organized dashboard instead of relying on verbal
+                requests and scattered messages.
+              </p>
+            </article>
+
+            <!-- card 3 -->
+            <article class="card reveal group p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lift" style="--reveal-delay: 180ms">
+              <span class="grid h-11 w-11 place-items-center rounded-2xl bg-primary-50 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+                  <path d="M12 3.5 14.4 9l5.6.5-4.3 3.8 1.3 5.7L12 15.9 6.9 19l1.4-5.7L4 9.5 9.6 9z" />
+                </svg>
+              </span>
+              <h3 class="mt-5 text-base font-extrabold text-ink">Showcase What Makes Your Riad Special</h3>
+              <p class="mt-2 text-sm leading-relaxed text-muted">
+                Present amenities, services, recommendations, social links and experiences in one
+                branded guest portal.
+              </p>
+            </article>
+
+            <!-- card 4 -->
+            <article class="card reveal group p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-lift" style="--reveal-delay: 270ms">
+              <span class="grid h-11 w-11 place-items-center rounded-2xl bg-primary-50 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3 2" />
+                </svg>
+              </span>
+              <h3 class="mt-5 text-base font-extrabold text-ink">A More Thoughtful Guest Experience</h3>
+              <p class="mt-2 text-sm leading-relaxed text-muted">
+                Help guests find what they need whenever they need it, from arrival information to
+                available services.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================= PRODUCT SHOWCASE ======================= -->
+      <section id="platform" class="dark-surface scroll-mt-24 relative overflow-hidden bg-night py-20 text-white sm:py-28">
+        <div aria-hidden="true" class="pointer-events-none absolute inset-0 opacity-[0.35]">
+          <div class="pattern-zellige-light absolute right-0 top-0 h-80 w-80"></div>
+          <div class="absolute -left-40 top-1/3 h-96 w-96 rounded-full bg-primary/25 blur-3xl"></div>
+        </div>
+
+        <div class="shell relative">
+          <div class="reveal max-w-2xl">
+            <p class="eyebrow eyebrow-on-dark">One platform, three experiences</p>
+            <h2 class="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
+              Guests get clarity. Your team gets control.
+            </h2>
+            <p class="mt-4 text-base leading-relaxed text-white/60">
+              Product previews below illustrate the RiadKit guest portal, the reception view and
+              the owner dashboard.
+            </p>
+          </div>
+
+          <div class="mt-14 grid gap-6 lg:grid-cols-2">
+            <!-- Experience 1: Guest portal -->
+            <article class="reveal overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur sm:p-8">
+              <span class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-sand">
+                Experience 01 · Mobile
+              </span>
+              <h3 class="mt-5 text-2xl font-extrabold">The Guest Portal</h3>
+              <p class="mt-2 max-w-md text-sm leading-relaxed text-white/60">
+                Everything your guests need, beautifully organized and always within reach.
+              </p>
+
+              <div class="mt-7 grid gap-6 sm:grid-cols-[auto_1fr] sm:items-center">
+                <!-- compact phone -->
+                <div class="phone !w-[220px] !border-white/15 !bg-night-soft mx-auto">
+                  <div class="phone-screen">
+                    <img
+                      src="assets/images/Branding page.png"
+                      alt="RiadKit guest portal: Wi-Fi details, social links and guest favorites on a phone"
+                      width="287"
+                      height="573"
+                      class="block h-auto w-full"
+                    />
+                  </div>
+                </div>
+
+                <!-- portal contents list -->
+                <ul class="space-y-3 text-sm">
+                  <li class="flex items-start gap-3 text-white/75"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">1</span>Welcome message and riad branding</li>
+                  <li class="flex items-start gap-3 text-white/75"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">2</span>Essential information and Wi-Fi details</li>
+                  <li class="flex items-start gap-3 text-white/75"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">3</span>House rules and check-in information</li>
+                  <li class="flex items-start gap-3 text-white/75"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">4</span>Services and menus</li>
+                  <li class="flex items-start gap-3 text-white/75"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">5</span>Local recommendations and activities</li>
+                  <li class="flex items-start gap-3 text-white/75"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">6</span>A simple way to submit guest requests</li>
+                </ul>
+              </div>
+            </article>
+
+            <!-- Experience 2: Reception -->
+            <article class="reveal overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur sm:p-8" style="--reveal-delay: 120ms">
+              <span class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-sand">
+                Experience 02 · Mobile
+              </span>
+              <h3 class="mt-5 text-2xl font-extrabold">The Reception View</h3>
+              <p class="mt-2 max-w-md text-sm leading-relaxed text-white/60">
+                Your front desk keeps everything moving — requests, orders, rooms and stock, straight from a phone.
+              </p>
+
+              <div class="mt-7 grid gap-6 sm:grid-cols-[auto_1fr] sm:items-center">
+                <!-- compact phone -->
+                <div class="phone !w-[220px] !border-white/15 !bg-night-soft mx-auto">
+                  <div class="phone-screen">
+                    <img
+                      src="assets/images/The Reception View.png"
+                      alt="RiadKit reception view: pending orders with accept or cancel, plus rooms and stock tabs"
+                      width="364"
+                      height="810"
+                      class="block h-auto w-full"
+                    />
+                  </div>
+                </div>
+
+                <!-- reception feature list -->
+                <ul class="space-y-3 text-sm">
+                  <li class="flex items-start gap-3 text-white/75"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">1</span>Incoming guest requests in one live list</li>
+                  <li class="flex items-start gap-3 text-white/75"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">2</span>Accept, assign or defer a request in one tap</li>
+                  <li class="flex items-start gap-3 text-white/75"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">3</span>Every guest order and its status, in view</li>
+                  <li class="flex items-start gap-3 text-white/75"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">4</span>Mark rooms active or inactive as they turn over</li>
+                  <li class="flex items-start gap-3 text-white/75"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">5</span>Stock levels for every service you offer</li>
+                  <li class="flex items-start gap-3 text-white/75"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">6</span>Flag anything out of stock, instantly</li>
+                </ul>
+              </div>
+            </article>
+
+            <!-- Experience 3: Owner dashboard (full width) -->
+            <article class="reveal overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur sm:p-8 lg:col-span-2" style="--reveal-delay: 240ms">
+              <span class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-sand">
+                Experience 03 · Desktop
+              </span>
+              <h3 class="mt-5 text-2xl font-extrabold">The Owner Dashboard</h3>
+              <p class="mt-2 max-w-md text-sm leading-relaxed text-white/60">
+                Set up and run the whole riad from your computer — rooms, services, stock, prices and
+                everything your guests see.
+              </p>
+
+              <div class="mt-7 grid gap-8 lg:grid-cols-[1.6fr_1fr] lg:items-center">
+                <!-- desktop mockup -->
+                <div class="overflow-hidden rounded-2xl border border-white/10 bg-white text-ink shadow-lift">
+                  <div class="flex items-center gap-2 border-b border-line bg-sand-light/70 px-4 py-2.5">
+                    <span class="h-2.5 w-2.5 rounded-full bg-primary/60"></span>
+                    <span class="h-2.5 w-2.5 rounded-full bg-sand-dark"></span>
+                    <span class="h-2.5 w-2.5 rounded-full bg-line"></span>
+                    <span class="ml-2 truncate text-[11px] font-semibold text-muted">RiadKit — Owner dashboard</span>
+                  </div>
+                  <img
+                    src="assets/images/The Owner Dashboard.png"
+                    alt="RiadKit owner dashboard: manage house rules, menu, excursions and services with a live guest preview"
+                    width="1882"
+                    height="920"
+                    class="block h-auto w-full"
+                  />
+                </div>
+
+                <!-- owner feature list -->
+                <ul class="space-y-3 text-sm">
+                  <li class="flex items-start gap-3 text-white/75"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">1</span>Full setup — rooms, services and prices</li>
+                  <li class="flex items-start gap-3 text-white/75"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">2</span>Everything guests see: portal content and branding</li>
+                  <li class="flex items-start gap-3 text-white/75"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">3</span>Every request and order, live</li>
+                  <li class="flex items-start gap-3 text-white/75"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">4</span>Room status across the whole riad</li>
+                  <li class="flex items-start gap-3 text-white/75"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">5</span>Stock control, with out-of-stock flags</li>
+                  <li class="flex items-start gap-3 text-white/75"><span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[10px] font-bold text-white">6</span>Accounts for your reception team</li>
+                </ul>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================= HOW IT WORKS ============================= -->
+      <section id="how-it-works" class="scroll-mt-24 py-20 sm:py-28">
+        <div class="shell">
+          <div class="reveal mx-auto max-w-2xl text-center">
+            <p class="eyebrow justify-center">How it works</p>
+            <h2 class="mt-4 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+              Up and running in three simple steps
+            </h2>
+            <p class="mt-4 text-base leading-relaxed text-muted">
+              From your riad's information to a guest scanning their first QR code.
+            </p>
+          </div>
+
+          <div class="relative mt-14">
+            <!-- connector line (desktop) -->
+            <div aria-hidden="true" class="absolute left-0 right-0 top-12 hidden lg:block">
+              <div class="mx-auto h-px w-4/5 bg-gradient-to-r from-transparent via-sand-dark to-transparent"></div>
+            </div>
+
+            <ol class="grid gap-6 lg:grid-cols-3">
+              <!-- step 1 -->
+              <li class="reveal card relative p-7">
+                <span class="relative z-10 grid h-14 w-14 place-items-center rounded-2xl bg-primary text-lg font-extrabold text-white shadow-[0_12px_24px_-14px_rgba(166,61,64,.9)]">01</span>
+                <div class="mt-5 h-24 rounded-2xl bg-sand-light pattern-arches flex items-end justify-center pb-3" aria-hidden="true">
+                  <div class="flex items-end gap-1.5">
+                    <span class="h-8 w-6 rounded-t-md bg-white shadow-card"></span>
+                    <span class="h-12 w-8 rounded-t-lg bg-primary/85 shadow-card"></span>
+                    <span class="h-9 w-6 rounded-t-md bg-white shadow-card"></span>
+                  </div>
+                </div>
+                <h3 class="mt-5 text-lg font-extrabold text-ink">Set Up Your Riad</h3>
+                <p class="mt-2 text-sm leading-relaxed text-muted">
+                  Add your riad's information, branding, services and guest resources — all in one
+                  place.
+                </p>
+              </li>
+
+              <!-- step 2 -->
+              <li class="reveal card relative p-7" style="--reveal-delay: 120ms">
+                <span class="relative z-10 grid h-14 w-14 place-items-center rounded-2xl bg-primary text-lg font-extrabold text-white shadow-[0_12px_24px_-14px_rgba(166,61,64,.9)]">02</span>
+                <div class="mt-5 flex h-24 items-center justify-center gap-4 rounded-2xl bg-sand-light pattern-zellige" aria-hidden="true">
+                  <div class="grid h-16 w-16 place-items-center rounded-xl bg-white shadow-card">
+                    <svg viewBox="0 0 24 24" class="h-9 w-9 text-night" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                      <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.5" /><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.5" />
+                      <rect x="3.5" y="14" width="6.5" height="6.5" rx="1.5" /><path d="M14 14h3v3M20.5 20.5h-3v-3M20.5 14v.01M14 20.5v.01" />
+                    </svg>
+                  </div>
+                </div>
+                <h3 class="mt-5 text-lg font-extrabold text-ink">Place Your QR Codes</h3>
+                <p class="mt-2 text-sm leading-relaxed text-muted">
+                  Make the guest portal accessible from a QR code placed in each room or another
+                  convenient location.
+                </p>
+              </li>
+
+              <!-- step 3 -->
+              <li class="reveal card relative p-7" style="--reveal-delay: 240ms">
+                <span class="relative z-10 grid h-14 w-14 place-items-center rounded-2xl bg-primary text-lg font-extrabold text-white shadow-[0_12px_24px_-14px_rgba(166,61,64,.9)]">03</span>
+                <div class="mt-5 flex h-24 items-center justify-center gap-3 rounded-2xl bg-sand-light pattern-arches" aria-hidden="true">
+                  <div class="flex h-16 w-10 flex-col items-center rounded-[10px] border-2 border-night bg-white pt-2">
+                    <span class="h-1.5 w-4 rounded-full bg-primary"></span>
+                    <span class="mt-1.5 h-1.5 w-6 rounded-full bg-line"></span>
+                    <span class="mt-1 h-1.5 w-6 rounded-full bg-line"></span>
+                    <span class="mt-1 h-3 w-6 rounded bg-primary/80"></span>
+                  </div>
+                  <div class="grid h-12 w-12 place-items-center rounded-full bg-white text-primary shadow-card">
+                    <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+                  </div>
+                </div>
+                <h3 class="mt-5 text-lg font-extrabold text-ink">Welcome Guests to a Better Experience</h3>
+                <p class="mt-2 text-sm leading-relaxed text-muted">
+                  Guests scan the code, explore available information and submit requests. Your team
+                  manages them from the RiadKit dashboard.
+                </p>
+              </li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================= FOR RIADS ============================= -->
+      <section id="for-riads" class="scroll-mt-24 overflow-hidden bg-white/60 py-20 sm:py-28">
+        <div class="shell">
+          <div class="relative grid items-center gap-10 lg:grid-cols-2">
+            <!-- photography -->
+            <div class="reveal relative">
+              <img
+                src="assets/images/riad-courtyard.jpg"
+                alt="Sunlit Moroccan riad courtyard with arches, plants and a central fountain"
+                width="1280"
+                height="850"
+                loading="lazy"
+                class="h-[22rem] w-full rounded-[2rem] object-cover shadow-lift sm:h-[30rem]"
+              />
+              <img
+                src="assets/images/riad-night.jpg"
+                alt="A riad courtyard at night, warmly lit around the fountain"
+                width="1280"
+                height="854"
+                loading="lazy"
+                class="absolute -bottom-8 right-4 hidden h-36 w-40 rounded-2xl border-4 border-ivory object-cover shadow-lift sm:block lg:-right-10"
+              />
+            </div>
+
+            <!-- content panel -->
+            <div class="reveal card relative z-10 p-8 sm:p-10 lg:-ml-16" style="--reveal-delay: 120ms">
+              <p class="eyebrow">For Moroccan riads</p>
+              <h2 class="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-ink text-balance sm:text-4xl">
+                Preserve the charm of your riad. Modernize the experience around it.
+              </h2>
+              <p class="mt-5 text-base leading-relaxed text-muted">
+                Your riad is more than a place to stay. It's a personal, memorable experience.
+                RiadKit helps you communicate its character, showcase its services and make the
+                guest journey feel effortless — without losing the personal touch that makes your
+                property special.
+              </p>
+
+              <ul class="mt-7 space-y-4">
+                <li class="flex items-start gap-3.5">
+                  <span class="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-white">
+                    <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+                  </span>
+                  <span class="text-[15px] font-bold text-ink">Your branding, your identity.</span>
+                </li>
+                <li class="flex items-start gap-3.5">
+                  <span class="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-white">
+                    <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+                  </span>
+                  <span class="text-[15px] font-bold text-ink">Your services, clearly presented.</span>
+                </li>
+                <li class="flex items-start gap-3.5">
+                  <span class="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary text-white">
+                    <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+                  </span>
+                  <span class="text-[15px] font-bold text-ink">Your hospitality, supported by simpler tools.</span>
+                </li>
+              </ul>
+
+              <a href="#request-demo" class="btn-primary mt-8">Request a Demo</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================= FEATURE BENTO ========================= -->
+      <section id="features" class="scroll-mt-24 py-20 sm:py-28">
+        <div class="shell">
+          <div class="reveal flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div class="max-w-2xl">
+              <p class="eyebrow">Feature highlights</p>
+              <h2 class="mt-4 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+                A small platform that covers the whole stay
+              </h2>
+            </div>
+            <a href="#demo" class="btn-secondary shrink-0 self-start sm:self-auto">Try the live preview</a>
+          </div>
+
+          <div class="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-6">
+            <!-- A: branding (tall) -->
+            <article class="reveal card flex flex-col overflow-hidden md:col-span-2 lg:col-span-3 lg:row-span-2">
+              <div class="flex-1 bg-gradient-to-br from-primary to-primary-deeper p-7 text-white">
+                <h3 class="text-lg font-extrabold">Your Riad, Your Brand</h3>
+                <p class="mt-2 text-sm leading-relaxed text-white/75">
+                  Showcase a branded digital guest portal with your riad's name, identity and
+                  welcome message.
+                </p>
+                <div class="mt-6 rounded-2xl bg-white/10 p-4 backdrop-blur">
+                  <div class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-white/70">
+                    <span class="grid h-5 w-5 place-items-center rounded-md bg-white/20 text-[10px]">R</span>
+                    Riad Dar Zaman · Marrakech
+                  </div>
+                  <p class="mt-3 text-lg font-extrabold leading-snug">"We're delighted to welcome you."</p>
+                  <div class="mt-3 flex flex-wrap gap-1.5">
+                    <span class="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold">Terrace breakfast</span>
+                    <span class="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold">Hammam</span>
+                    <span class="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold">Airport transfer</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center justify-between gap-4 border-t border-line bg-ivory px-7 py-4">
+                <p class="text-xs font-semibold text-muted">Portal header, colors and welcome copy</p>
+                <span class="rounded-full bg-sand px-3 py-1 text-[11px] font-bold text-night">Branded</span>
+              </div>
+            </article>
+
+            <!-- B: guest information -->
+            <article class="reveal card p-7 lg:col-span-3" style="--reveal-delay: 80ms">
+              <h3 class="text-lg font-extrabold text-ink">Guest Information, Always Available</h3>
+              <p class="mt-2 text-sm leading-relaxed text-muted">
+                Organize Wi-Fi details, house rules, check-in information and other useful
+                resources.
+              </p>
+              <div class="mt-5 space-y-2">
+                <div class="flex items-center justify-between rounded-xl border border-line bg-ivory px-4 py-3">
+                  <span class="text-xs font-bold uppercase tracking-wider text-muted">Wi-Fi network</span>
+                  <span class="text-sm font-extrabold text-ink">DarZaman_Guest</span>
+                </div>
+                <div class="flex items-center justify-between rounded-xl border border-line bg-ivory px-4 py-3">
+                  <span class="text-xs font-bold uppercase tracking-wider text-muted">Check-in</span>
+                  <span class="text-sm font-extrabold text-ink">From 2 pm</span>
+                </div>
+              </div>
+            </article>
+
+            <!-- C: services -->
+            <article class="reveal card p-7 lg:col-span-3" style="--reveal-delay: 160ms">
+              <h3 class="text-lg font-extrabold text-ink">Services at Their Fingertips</h3>
+              <p class="mt-2 text-sm leading-relaxed text-muted">
+                Present the services and experiences that guests can explore and request.
+              </p>
+              <div class="mt-5 flex flex-wrap gap-2">
+                <span class="rounded-full border border-line bg-ivory px-3.5 py-2 text-xs font-bold text-ink">Breakfast</span>
+                <span class="rounded-full border border-line bg-ivory px-3.5 py-2 text-xs font-bold text-ink">Hammam</span>
+                <span class="rounded-full border border-line bg-ivory px-3.5 py-2 text-xs font-bold text-ink">Home-cooked dinner</span>
+                <span class="rounded-full border border-line bg-ivory px-3.5 py-2 text-xs font-bold text-ink">Airport transfer</span>
+                <span class="rounded-full bg-primary px-3.5 py-2 text-xs font-bold text-white">+ Add yours</span>
+              </div>
+            </article>
+
+            <!-- D: requests -->
+            <article class="reveal card p-7 lg:col-span-3" style="--reveal-delay: 80ms">
+              <h3 class="text-lg font-extrabold text-ink">A Clear View of Guest Requests</h3>
+              <p class="mt-2 text-sm leading-relaxed text-muted">
+                Let staff see incoming requests and manage their progress from the dashboard.
+              </p>
+              <div class="mt-5 space-y-2">
+                <div class="flex items-center gap-3 rounded-xl border border-line bg-ivory px-4 py-2.5">
+                  <span class="h-2 w-2 shrink-0 rounded-full bg-primary"></span>
+                  <span class="flex-1 truncate text-sm font-bold text-ink">Extra towels · Room 4</span>
+                  <span class="shrink-0 rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-bold text-primary">In progress</span>
+                </div>
+                <div class="flex items-center gap-3 rounded-xl border border-line bg-ivory px-4 py-2.5">
+                  <span class="h-2 w-2 shrink-0 rounded-full bg-sand-dark"></span>
+                  <span class="flex-1 truncate text-sm font-bold text-ink">Late check-in · Room 2</span>
+                  <span class="shrink-0 rounded-full bg-sand px-2 py-0.5 text-[10px] font-bold text-night">Pending</span>
+                </div>
+              </div>
+            </article>
+
+            <!-- E: local recommendations -->
+            <article class="reveal card overflow-hidden lg:col-span-3" style="--reveal-delay: 160ms">
+              <img
+                src="assets/images/table-detail.jpg"
+                alt="Breakfast table set in a riad with fresh flowers"
+                width="1280"
+                height="850"
+                loading="lazy"
+                class="h-40 w-full object-cover"
+              />
+              <div class="p-7 pt-5">
+                <h3 class="text-lg font-extrabold text-ink">Local Recommendations</h3>
+                <p class="mt-2 text-sm leading-relaxed text-muted">
+                  Help guests discover places, activities and recommendations selected by the riad.
+                </p>
+              </div>
+            </article>
+
+            <!-- F: mobile-first -->
+            <article class="reveal card flex flex-col items-start gap-6 p-7 sm:flex-row sm:items-center sm:justify-between lg:col-span-6" style="--reveal-delay: 80ms">
+              <div class="max-w-xl">
+                <h3 class="text-lg font-extrabold text-ink">Designed for the Guest's Phone</h3>
+                <p class="mt-2 text-sm leading-relaxed text-muted">
+                  Deliver a mobile-first portal that guests can access without installing a separate
+                  application. One scan and they're in.
+                </p>
+              </div>
+              <div class="flex items-center gap-4" aria-hidden="true">
+                <div class="flex h-20 w-14 flex-col items-center rounded-[14px] border-2 border-night bg-ivory p-1.5">
+                  <span class="h-1.5 w-5 rounded-full bg-night/70"></span>
+                  <span class="mt-2 h-2 w-full rounded bg-primary/80"></span>
+                  <span class="mt-1.5 h-1.5 w-full rounded bg-line"></span>
+                  <span class="mt-1 h-1.5 w-2/3 rounded bg-line"></span>
+                  <span class="mt-auto h-4 w-full rounded-md bg-sand"></span>
+                </div>
+                <div class="grid h-16 w-16 place-items-center rounded-2xl bg-night text-white">
+                  <svg viewBox="0 0 24 24" class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+                    <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.5" /><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.5" />
+                    <rect x="3.5" y="14" width="6.5" height="6.5" rx="1.5" /><path d="M14 14h3v3M20.5 20.5h-3v-3" />
+                  </svg>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================= GUEST JOURNEY ========================= -->
+      <section id="journey" class="scroll-mt-24 border-y border-line bg-white/60 py-20 sm:py-28">
+        <div class="shell">
+          <div class="reveal mx-auto max-w-2xl text-center">
+            <p class="eyebrow justify-center">The guest journey</p>
+            <h2 class="mt-4 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+              Small changes, a calmer stay
+            </h2>
+            <p class="mt-4 text-base leading-relaxed text-muted">
+              Every riad runs its own way. Here's what changes when guest information and requests
+              live in one place.
+            </p>
+          </div>
+
+          <div class="mt-12 grid gap-6 lg:grid-cols-2">
+            <!-- before -->
+            <div class="reveal overflow-hidden rounded-3xl border border-line bg-ivory">
+              <img
+                src="assets/images/riad-interior.jpg"
+                alt="A riad interior with a traditional tiled lounge"
+                width="1280"
+                height="960"
+                loading="lazy"
+                class="h-36 w-full object-cover"
+              />
+              <div class="p-8">
+                <div class="flex items-center gap-3">
+                  <span class="grid h-10 w-10 place-items-center rounded-xl bg-white text-muted shadow-card">
+                    <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 8v5M12 16.5v.5" /><circle cx="12" cy="12" r="9" /></svg>
+                  </span>
+                  <h3 class="text-lg font-extrabold text-ink">Without a centralized guest portal</h3>
+                </div>
+                <ul class="mt-6 space-y-4 text-sm leading-relaxed text-muted">
+                  <li class="flex gap-3"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-muted/50"></span>Guests may need to ask staff for basic information.</li>
+                  <li class="flex gap-3"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-muted/50"></span>Service information can be scattered across paper and messages.</li>
+                  <li class="flex gap-3"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-muted/50"></span>Requests may reach the team through several different channels.</li>
+                  <li class="flex gap-3"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-muted/50"></span>Available services can be harder for guests to discover.</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- after -->
+            <div class="reveal dark-surface overflow-hidden rounded-3xl bg-night text-white" style="--reveal-delay: 120ms">
+              <img
+                src="assets/images/riad-pool-night.jpg"
+                alt="A riad pool and courtyard lit warmly at night"
+                width="1280"
+                height="850"
+                loading="lazy"
+                class="h-36 w-full object-cover"
+              />
+              <div class="p-8">
+                <div class="flex items-center gap-3">
+                  <span class="grid h-10 w-10 place-items-center rounded-xl bg-primary text-white">
+                    <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+                  </span>
+                  <h3 class="text-lg font-extrabold">With RiadKit</h3>
+                </div>
+                <ul class="mt-6 space-y-4 text-sm leading-relaxed text-white/70">
+                <li class="flex gap-3"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-sand"></span>Essential information is accessible through a QR code.</li>
+                <li class="flex gap-3"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-sand"></span>Services and recommendations are presented in one place.</li>
+                <li class="flex gap-3"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-sand"></span>Requests appear in an organized dashboard.</li>
+                <li class="flex gap-3"><span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-sand"></span>Guests can explore the riad's offerings more easily.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================== INTERACTIVE DEMO ======================== -->
+      <section id="demo" class="scroll-mt-24 py-20 sm:py-28">
+        <div class="shell">
+          <div class="reveal mx-auto max-w-2xl text-center">
+            <p class="eyebrow justify-center">Interactive preview</p>
+            <h2 class="mt-4 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+              See what your guests will see.
+            </h2>
+            <p class="mt-4 text-base leading-relaxed text-muted">
+              Explore a few screens from the RiadKit guest portal. Sample content, shown for
+              demonstration.
+            </p>
+          </div>
+
+          <!-- tabs -->
+          <div class="reveal mt-10 flex justify-center">
+            <div
+              id="demo-tabs"
+              role="tablist"
+              aria-label="Guest portal screens"
+              class="inline-flex max-w-full flex-wrap justify-center gap-1 rounded-2xl border border-line bg-white p-1.5 shadow-card"
+            >
+              <button type="button" role="tab" id="tab-welcome" aria-controls="panel-welcome" aria-selected="true" class="rounded-xl px-4 py-2.5 text-sm font-bold transition-colors">Welcome</button>
+              <button type="button" role="tab" id="tab-branding" aria-controls="panel-branding" aria-selected="false" tabindex="-1" class="rounded-xl px-4 py-2.5 text-sm font-bold transition-colors">Branding</button>
+              <button type="button" role="tab" id="tab-menu" aria-controls="panel-menu" aria-selected="false" tabindex="-1" class="rounded-xl px-4 py-2.5 text-sm font-bold transition-colors">Menu</button>
+              <button type="button" role="tab" id="tab-explore" aria-controls="panel-explore" aria-selected="false" tabindex="-1" class="rounded-xl px-4 py-2.5 text-sm font-bold transition-colors">Explore</button>
+            </div>
+          </div>
+
+          <!-- phone with panels -->
+          <div class="reveal mt-10 flex flex-col items-center">
+            <div class="relative">
+              <!-- floating cards (large screens only) -->
+              <div class="pointer-events-none absolute inset-0 hidden lg:block" aria-hidden="true">
+                <!-- left top: image card -->
+                <div class="absolute -left-64 top-1 z-20 w-48 rotate-[-3.5deg]">
+                  <div class="reveal overflow-hidden rounded-2xl border border-line bg-white shadow-lift animate-floaty" style="--reveal-delay: 500ms">
+                    <img
+                      src="assets/images/table-detail.jpg"
+                      alt=""
+                      width="1280"
+                      height="850"
+                      loading="lazy"
+                      class="h-20 w-full object-cover"
+                    />
+                    <div class="p-3.5">
+                      <p class="text-[13px] font-bold leading-snug text-ink">Breakfast on the terrace</p>
+                      <span class="mt-2 inline-block rounded-full bg-primary-50 px-2.5 py-1 text-[11px] font-bold text-primary">Tomorrow · 8:00 AM</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- left middle: request card -->
+                <div class="absolute -left-[17.5rem] top-[46%] z-20 w-44 rotate-[3deg]">
+                  <div class="reveal rounded-2xl border border-line bg-white p-4 shadow-lift animate-floatySlow" style="--reveal-delay: 700ms">
+                    <div class="flex items-center justify-between">
+                      <span class="text-[11px] font-bold uppercase tracking-wider text-muted">New request</span>
+                      <span class="h-2 w-2 animate-pulse rounded-full bg-primary"></span>
+                    </div>
+                    <p class="mt-2 text-[13px] font-bold leading-snug text-ink">Extra towels before 8 pm</p>
+                    <div class="mt-3 flex items-center justify-between">
+                      <span class="rounded-full bg-primary-50 px-2.5 py-1 text-[11px] font-bold text-primary">In progress</span>
+                      <span class="text-[11px] font-medium text-muted">Room 4</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- left bottom: image card -->
+                <div class="absolute -left-[15.5rem] bottom-6 z-20 w-44 rotate-[-2deg]">
+                  <div class="reveal overflow-hidden rounded-2xl border border-line bg-white shadow-lift animate-floaty" style="--reveal-delay: 800ms">
+                    <img
+                      src="assets/images/riad-courtyard.jpg"
+                      alt=""
+                      width="1280"
+                      height="850"
+                      loading="lazy"
+                      class="h-16 w-full object-cover"
+                    />
+                    <div class="p-3.5">
+                      <p class="text-[13px] font-bold leading-snug text-ink">Courtyard tea time</p>
+                      <span class="mt-2 inline-block rounded-full bg-sand px-2.5 py-1 text-[11px] font-bold text-night">Today · 6:00 PM</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- right top: image card -->
+                <div class="absolute -right-[15.5rem] top-6 z-20 w-44 rotate-[3.5deg]">
+                  <div class="reveal overflow-hidden rounded-2xl border border-line bg-white shadow-lift animate-floatySlow" style="--reveal-delay: 600ms">
+                    <img
+                      src="assets/images/riad-night.jpg"
+                      alt=""
+                      width="1280"
+                      height="850"
+                      loading="lazy"
+                      class="h-20 w-full object-cover"
+                    />
+                    <div class="p-3.5">
+                      <p class="text-[13px] font-bold leading-snug text-ink">Dinner in the garden</p>
+                      <span class="mt-2 inline-block rounded-full bg-sand px-2.5 py-1 text-[11px] font-bold text-night">Tonight · 7:30 PM</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- right middle: checkout card -->
+                <div class="absolute -right-[17.5rem] top-[43%] z-20 w-48 rotate-[-3deg]">
+                  <div class="reveal rounded-2xl border border-line bg-white p-4 shadow-lift animate-floaty" style="--reveal-delay: 650ms">
+                    <div class="flex items-center gap-2.5">
+                      <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-sand text-night">
+                        <svg viewBox="0 0 24 24" class="h-[18px] w-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7.5V12l3 2" /></svg>
+                      </span>
+                      <div class="min-w-0">
+                        <p class="truncate text-[13px] font-bold text-ink">Late checkout</p>
+                        <p class="text-[11px] font-bold text-primary">Until 2 PM · free</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- right bottom: wi-fi card -->
+                <div class="absolute -right-[16.5rem] bottom-4 z-20 w-44 rotate-[2deg]">
+                  <div class="reveal rounded-2xl border border-line bg-white p-4 shadow-lift animate-floatySlow" style="--reveal-delay: 850ms">
+                    <div class="flex items-center gap-2.5">
+                      <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-50 text-primary">
+                        <svg viewBox="0 0 24 24" class="h-[18px] w-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5.5 5.5 0 0 1 7 0M12 19.5h.01" /></svg>
+                      </span>
+                      <div class="min-w-0">
+                        <p class="truncate text-[13px] font-bold text-ink">RiadElFenn_Guest</p>
+                        <p class="text-[11px] font-bold text-primary">Connected · free</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="phone relative z-10 !w-[19.5rem]">
+                <span class="phone-notch" aria-hidden="true"></span>
+              <div class="phone-screen">
+                <!-- Panel: Welcome -->
+                <div id="panel-welcome" role="tabpanel" aria-labelledby="tab-welcome" class="min-h-[30rem] bg-ivory">
+                  <!-- Image slot: welcome screen (greeting, stay details, quick info) -->
+                  <img
+                    src="assets/images/Welcome screen.png"
+                    alt="RiadKit welcome screen: photo of the riad with a marhaba welcome and stay description"
+                    width="367"
+                    height="807"
+                    class="block h-auto w-full"
+                  />
+                </div>
+
+                <!-- Panel: Branding -->
+                <div id="panel-branding" role="tabpanel" aria-labelledby="tab-branding" class="min-h-[30rem] bg-ivory" hidden>
+                  <!-- Image slot: branding page (Wi-Fi, socials, follow us, more) -->
+                  <img
+                    src="assets/images/Branding page.png"
+                    alt="RiadKit branding page: guest Wi-Fi credentials, social links and guest favorites"
+                    width="287"
+                    height="573"
+                    class="block h-auto w-full"
+                  />
+                </div>
+
+                <!-- Panel: Menu -->
+                <div id="panel-menu" role="tabpanel" aria-labelledby="tab-menu" class="min-h-[30rem] bg-ivory" hidden>
+                  <!-- Image slot: menu page (dishes, drinks, prices) -->
+                  <img
+                    src="assets/images/Menu page.png"
+                    alt="RiadKit menu page: in-room dining with signature dishes, categories and prices"
+                    width="367"
+                    height="811"
+                    class="block h-auto w-full"
+                  />
+                </div>
+
+                <!-- Panel: Explore -->
+                <div id="panel-explore" role="tabpanel" aria-labelledby="tab-explore" class="min-h-[30rem] bg-ivory" hidden>
+                  <!-- Image slot: explore page (trips, activities, prices) -->
+                  <img
+                    src="assets/images/explor page.png"
+                    alt="RiadKit explore page: tours and experiences, featured excursions and day trips"
+                    width="365"
+                    height="811"
+                    class="block h-auto w-full"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+            <p class="mt-6 max-w-md text-center text-xs leading-relaxed text-muted">
+              Front-end preview with sample content — no real guest data, accounts or reservations
+              are shown.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================ CTA + FORM ============================ -->
+      <section id="request-demo" class="dark-surface scroll-mt-24 relative overflow-hidden bg-night text-white">
+        <img
+          src="assets/images/riad-arch-detail.jpg"
+          alt=""
+          aria-hidden="true"
+          width="1280"
+          height="443"
+          loading="lazy"
+          class="absolute inset-0 h-full w-full object-cover opacity-60"
+        />
+        <div aria-hidden="true" class="absolute inset-0 bg-gradient-to-r from-night via-night/90 to-night/55"></div>
+        <div aria-hidden="true" class="pattern-zellige-light absolute inset-0 opacity-25"></div>
+
+        <div class="shell relative grid gap-12 py-20 sm:py-28 lg:grid-cols-2 lg:items-center">
+          <div class="reveal">
+            <p class="eyebrow eyebrow-on-dark">Get started</p>
+            <h2 class="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-balance sm:text-4xl lg:text-5xl">
+              Ready to give your guests a better stay?
+            </h2>
+            <p class="mt-5 max-w-lg text-base leading-relaxed text-white/65">
+              Bring your guest information, services and requests into one simple experience
+              designed for riads.
+            </p>
+            <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+              <a href="#demo-form" class="btn-sand">Request a Demo</a>
+              <a href="#faq" class="btn-ghost-light">Have Questions? Read the FAQ</a>
+            </div>
+          </div>
+
+          <!-- form card -->
+          <div class="reveal rounded-3xl border border-white/10 bg-white p-6 text-ink shadow-lift sm:p-8" style="--reveal-delay: 120ms">
+            <h3 class="text-lg font-extrabold">Request your demo</h3>
+            <p class="mt-1 text-sm text-muted">Tell us a little about your riad and we'll be in touch.</p>
+
+            <form id="demo-form" class="mt-6 space-y-4 scroll-mt-28" novalidate>
+              <div>
+                <label for="f-name" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted">Your name</label>
+                <input id="f-name" name="name" type="text" required autocomplete="name" placeholder="Yasmine El Amrani"
+                  class="w-full rounded-xl border border-line bg-ivory px-4 py-3 text-sm font-semibold text-ink placeholder:text-muted/60 focus:border-primary focus:bg-white" />
+                <p class="mt-1 text-xs font-semibold text-primary" data-error-for="name" role="alert"></p>
+              </div>
+              <div>
+                <label for="f-riad" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted">Riad name</label>
+                <input id="f-riad" name="riad" type="text" required autocomplete="organization" placeholder="Riad Dar Zaman"
+                  class="w-full rounded-xl border border-line bg-ivory px-4 py-3 text-sm font-semibold text-ink placeholder:text-muted/60 focus:border-primary focus:bg-white" />
+                <p class="mt-1 text-xs font-semibold text-primary" data-error-for="riad" role="alert"></p>
+              </div>
+              <div>
+                <label for="f-email" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted">Email</label>
+                <input id="f-email" name="email" type="email" required autocomplete="email" placeholder="you@yourriad.com"
+                  class="w-full rounded-xl border border-line bg-ivory px-4 py-3 text-sm font-semibold text-ink placeholder:text-muted/60 focus:border-primary focus:bg-white" />
+                <p class="mt-1 text-xs font-semibold text-primary" data-error-for="email" role="alert"></p>
+              </div>
+              <div>
+                <label for="f-message" class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted">Anything we should know? <span class="normal-case text-muted/70">(optional)</span></label>
+                <textarea id="f-message" name="message" rows="3" placeholder="Rooms, current tools, what you'd like to improve…"
+                  class="w-full resize-none rounded-xl border border-line bg-ivory px-4 py-3 text-sm font-semibold text-ink placeholder:text-muted/60 focus:border-primary focus:bg-white"></textarea>
+              </div>
+
+              <button type="submit" class="btn-primary w-full">Request my demo</button>
+              <p id="form-status" class="text-sm font-semibold" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== FAQ ============================== -->
+      <section id="faq" class="scroll-mt-24 py-20 sm:py-28">
+        <div class="shell grid gap-10 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
+          <div class="reveal">
+            <p class="eyebrow">FAQ</p>
+            <h2 class="mt-4 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
+              Questions, answered
+            </h2>
+            <p class="mt-4 max-w-sm text-base leading-relaxed text-muted">
+              Everything you need to know about how RiadKit works for your riad and your guests.
+            </p>
+            <a href="#request-demo" class="btn-secondary mt-7">Request a Demo</a>
+          </div>
+
+          <div class="reveal space-y-3" style="--reveal-delay: 100ms">
+            <!-- item -->
+            <div class="faq-item overflow-hidden rounded-2xl border border-line bg-white transition-shadow">
+              <button type="button" class="faq-trigger flex w-full items-center justify-between gap-4 px-6 py-5 text-left" aria-expanded="false" aria-controls="faq-a1" id="faq-q1">
+                <span class="text-base font-bold text-ink">What is RiadKit?</span>
+                <span class="faq-icon grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-50 text-primary transition-transform duration-300">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                </span>
+              </button>
+              <div class="faq-answer px-6" id="faq-a1" role="region" aria-labelledby="faq-q1">
+                <div><p class="pb-5 text-sm leading-relaxed text-muted">RiadKit is a digital guest experience platform built for Moroccan riads. It gives guests a single place to find information, services and recommendations, and gives your team one dashboard to receive and manage guest requests.</p></div>
+              </div>
+            </div>
+
+            <div class="faq-item overflow-hidden rounded-2xl border border-line bg-white">
+              <button type="button" class="faq-trigger flex w-full items-center justify-between gap-4 px-6 py-5 text-left" aria-expanded="false" aria-controls="faq-a2" id="faq-q2">
+                <span class="text-base font-bold text-ink">How do guests access the portal?</span>
+                <span class="faq-icon grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-50 text-primary transition-transform duration-300">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                </span>
+              </button>
+              <div class="faq-answer px-6" id="faq-a2" role="region" aria-labelledby="faq-q2">
+                <div><p class="pb-5 text-sm leading-relaxed text-muted">You place a QR code in each room or another convenient spot. Guests scan it with their phone camera and the portal opens straight away in their browser.</p></div>
+              </div>
+            </div>
+
+            <div class="faq-item overflow-hidden rounded-2xl border border-line bg-white">
+              <button type="button" class="faq-trigger flex w-full items-center justify-between gap-4 px-6 py-5 text-left" aria-expanded="false" aria-controls="faq-a3" id="faq-q3">
+                <span class="text-base font-bold text-ink">Do guests need to download an app?</span>
+                <span class="faq-icon grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-50 text-primary transition-transform duration-300">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                </span>
+              </button>
+              <div class="faq-answer px-6" id="faq-a3" role="region" aria-labelledby="faq-q3">
+                <div><p class="pb-5 text-sm leading-relaxed text-muted">No. The portal runs in the guest's mobile browser — nothing to install, no account to create.</p></div>
+              </div>
+            </div>
+
+            <div class="faq-item overflow-hidden rounded-2xl border border-line bg-white">
+              <button type="button" class="faq-trigger flex w-full items-center justify-between gap-4 px-6 py-5 text-left" aria-expanded="false" aria-controls="faq-a4" id="faq-q4">
+                <span class="text-base font-bold text-ink">Can I customize the portal for my riad?</span>
+                <span class="faq-icon grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-50 text-primary transition-transform duration-300">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                </span>
+              </button>
+              <div class="faq-answer px-6" id="faq-a4" role="region" aria-labelledby="faq-q4">
+                <div><p class="pb-5 text-sm leading-relaxed text-muted">Yes. Your portal carries your riad's name, welcome message and identity, so it feels like a continuation of your property rather than a generic tool.</p></div>
+              </div>
+            </div>
+
+            <div class="faq-item overflow-hidden rounded-2xl border border-line bg-white">
+              <button type="button" class="faq-trigger flex w-full items-center justify-between gap-4 px-6 py-5 text-left" aria-expanded="false" aria-controls="faq-a5" id="faq-q5">
+                <span class="text-base font-bold text-ink">What kind of information can I share?</span>
+                <span class="faq-icon grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-50 text-primary transition-transform duration-300">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                </span>
+              </button>
+              <div class="faq-answer px-6" id="faq-a5" role="region" aria-labelledby="faq-q5">
+                <div><p class="pb-5 text-sm leading-relaxed text-muted">Wi-Fi details, house rules, check-in and check-out information, your services and menus, local recommendations and activities — anything that helps guests during their stay.</p></div>
+              </div>
+            </div>
+
+            <div class="faq-item overflow-hidden rounded-2xl border border-line bg-white">
+              <button type="button" class="faq-trigger flex w-full items-center justify-between gap-4 px-6 py-5 text-left" aria-expanded="false" aria-controls="faq-a6" id="faq-q6">
+                <span class="text-base font-bold text-ink">How do guest requests reach my team?</span>
+                <span class="faq-icon grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-50 text-primary transition-transform duration-300">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                </span>
+              </button>
+              <div class="faq-answer px-6" id="faq-a6" role="region" aria-labelledby="faq-q6">
+                <div><p class="pb-5 text-sm leading-relaxed text-muted">Every request submitted from the portal appears in the RiadKit dashboard, where your team can see its status and move it along as it gets handled.</p></div>
+              </div>
+            </div>
+
+            <div class="faq-item overflow-hidden rounded-2xl border border-line bg-white">
+              <button type="button" class="faq-trigger flex w-full items-center justify-between gap-4 px-6 py-5 text-left" aria-expanded="false" aria-controls="faq-a7" id="faq-q7">
+                <span class="text-base font-bold text-ink">Can I update my services and information?</span>
+                <span class="faq-icon grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-50 text-primary transition-transform duration-300">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                </span>
+              </button>
+              <div class="faq-answer px-6" id="faq-a7" role="region" aria-labelledby="faq-q7">
+                <div><p class="pb-5 text-sm leading-relaxed text-muted">Yes. You stay in control of your content — update services, opening hours, recommendations or practical information whenever something changes.</p></div>
+              </div>
+            </div>
+
+            <div class="faq-item overflow-hidden rounded-2xl border border-line bg-white">
+              <button type="button" class="faq-trigger flex w-full items-center justify-between gap-4 px-6 py-5 text-left" aria-expanded="false" aria-controls="faq-a8" id="faq-q8">
+                <span class="text-base font-bold text-ink">How can I get started?</span>
+                <span class="faq-icon grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-50 text-primary transition-transform duration-300">
+                  <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                </span>
+              </button>
+              <div class="faq-answer px-6" id="faq-a8" role="region" aria-labelledby="faq-q8">
+                <div><p class="pb-5 text-sm leading-relaxed text-muted">Request a demo using the form above. We'll walk you through RiadKit with your riad's own flow in mind and help you set up your portal.</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ============================== FOOTER ============================== -->
+    <footer class="dark-surface bg-night text-white">
+      <div class="shell grid gap-10 py-16 md:grid-cols-[1.4fr_1fr_1fr]">
+        <div>
+          <a href="#top" class="flex items-center gap-2.5" aria-label="RiadKit — home">
+            <span class="grid h-10 w-10 place-items-center rounded-xl bg-primary text-white">
+              <svg viewBox="0 0 32 32" class="h-6 w-6" fill="none" aria-hidden="true">
+                <path d="M7 27V15a9 9 0 0 1 18 0v12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+                <path d="M12.5 27v-6.5M19.5 27v-6.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+                <circle cx="16" cy="11.5" r="2.2" fill="currentColor" />
+              </svg>
+            </span>
+            <span class="text-lg font-extrabold tracking-tight">Riad<span class="text-primary-soft">Kit</span></span>
+          </a>
+          <p class="mt-4 max-w-sm text-sm leading-relaxed text-white/55">
+            RiadKit helps riads create a smoother digital guest experience while keeping their
+            hospitality personal.
+          </p>
+        </div>
+
+        <nav aria-label="Footer — explore">
+          <p class="text-xs font-bold uppercase tracking-[0.18em] text-sand">Explore</p>
+          <ul class="mt-4 space-y-3 text-sm text-white/60">
+            <li><a href="#features" class="transition-colors hover:text-white">Features</a></li>
+            <li><a href="#how-it-works" class="transition-colors hover:text-white">How It Works</a></li>
+            <li><a href="#for-riads" class="transition-colors hover:text-white">For Riads</a></li>
+            <li><a href="#faq" class="transition-colors hover:text-white">FAQ</a></li>
+          </ul>
+        </nav>
+
+        <nav aria-label="Footer — product">
+          <p class="text-xs font-bold uppercase tracking-[0.18em] text-sand">Product</p>
+          <ul class="mt-4 space-y-3 text-sm text-white/60">
+            <li><a href="#platform" class="transition-colors hover:text-white">Guest portal</a></li>
+            <li><a href="#platform" class="transition-colors hover:text-white">Staff dashboard</a></li>
+            <li><a href="#request-demo" class="transition-colors hover:text-white">Request a demo</a></li>
+            <li><a href="https://app.riadkit.com/login" class="transition-colors hover:text-white">Log in</a></li>
+          </ul>
+        </nav>
+      </div>
+
+      <div class="border-t border-white/10">
+        <div class="shell flex flex-col gap-3 py-6 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between">
+          <p>© <span data-year>2026</span> RiadKit. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

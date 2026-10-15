@@ -168,6 +168,14 @@ riadkit/
 │       ├── toast.tsx                  # Custom toast system (Sonner)
 │       └── utils.ts                   # cn() utility (clsx + tailwind-merge)
 │
+├── landingpage/                        # Static marketing site (vanilla HTML + Tailwind v3)
+│   ├── index.html                      # The landing page
+│   ├── css/styles.css                  # BUILT output — never edit directly
+│   ├── src/                            # Source CSS (input.css, fonts.css)
+│   ├── js/main.js                      # Vanilla interactions, no dependencies
+│   ├── assets/                         # Self-hosted Manrope + app screenshots/photos
+│   └── tailwind.config.js              # Own Tailwind v3 config (separate from frontend)
+│
 └── .vscode/                           # VSCode workspace settings
 ```
 
@@ -408,6 +416,24 @@ Two-column layout on desktop (editor left, preview right). Tabs:
 - **AnimatedOrderList** — animated order list with status transitions
 - **NotificationBell/Drawer/List/Item** — notification system with time grouping
 - **GuestPortalPreview** — live mobile preview inside the CMS
+
+---
+
+## Landing Page (`landingpage/`)
+
+The marketing site is **vanilla static HTML** (not part of the Next.js app) — deliberately kept
+dependency-free for performance (≈37 KB CSS + 9.5 KB JS, zero framework, zero third-party requests).
+
+- **Tailwind v3** with its own `package.json` and `tailwind.config.js`. Do **not** mix its build
+  with the frontend's Tailwind 4 setup — they are fully separate.
+- `css/styles.css` is generated (`npm run build` in `landingpage/`; use `npm.cmd` on Windows/PowerShell).
+  Never edit it by hand.
+- Design tokens mirror the app's palette (ivory `#FAF8F5`, primary `#A63D40`, sand `#E9D8C5`).
+- All three "Log in" links point at the real app: `https://app.riadkit.com/login` — update if the
+  production frontend domain differs.
+- The demo-request form is client-side only; wiring it to a Laravel endpoint is a known TODO.
+- Next.js serves only app routes (`/login`, `/register`, `/dashboard`, `/reception`, `/room/[token]`,
+  `/print/*`); the marketing root domain is served by this static folder.
 
 ---
 

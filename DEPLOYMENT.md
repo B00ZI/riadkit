@@ -251,6 +251,37 @@ server {
 
 ---
 
+## Landing Page Deployment
+
+The `landingpage/` folder is a static site — no server runtime needed. It deploys to the **root
+domain** (e.g., `https://riadkit.com`), while the Next.js frontend moves to the app subdomain
+(e.g., `https://app.riadkit.com`).
+
+### 1. Build the CSS (before every deploy)
+
+```bash
+cd landingpage
+npm install       # first time only
+npm run build     # regenerates css/styles.css
+```
+
+### 2. Deploy
+
+Upload/sync the `landingpage/` folder contents (`index.html`, `css/`, `js/`, `assets/`) to any
+static host — Vercel (as a separate project with root directory `landingpage`), Netlify, Cloud
+flare Pages, or an Nginx `root` directive.
+
+No build step is required by the host as long as `css/styles.css` is committed (it is).
+
+### 3. Checklist before going live
+
+- [ ] "Log in" links match the real frontend URL (currently `https://app.riadkit.com/login`)
+- [ ] `og:image` / `twitter:image` absolute URLs use the real production domain (placeholder today:
+      `https://riadkit.app/...` in `index.html`)
+- [ ] Decide on photo attribution (see `landingpage/README.md` — CC BY-SA photography)
+
+---
+
 ## Quick Start (Development)
 
 ### Backend
