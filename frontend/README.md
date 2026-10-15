@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RiadKit — Frontend
 
-## Getting Started
+The Next.js application behind RiadKit: the owner dashboard, the reception desk, and the guest
+portal that opens when a guest scans a room's QR code.
 
-First, run the development server:
+The marketing site is a separate, framework-free project in [`../landingpage`](../landingpage).
+
+## Routes
+
+| Path | Who it's for | What it is |
+|---|---|---|
+| `/login`, `/register` | Everyone | Sign in / create account |
+| `/dashboard/*` | Owners | Rooms, front desk, portal content, history, staff, account |
+| `/reception/*` | Reception staff | The streamlined front-desk view |
+| `/room/[token]` | Guests | The guest portal — opened by QR code, no login |
+
+Role rules are enforced in the layouts: `dashboard` is owner-only, `reception` accepts owner
+and receptionist.
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Expects the API at `http://localhost:8000` by default — no configuration needed for local dev
+(mind Windows: use `npm.cmd` in PowerShell).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Only needed outside local dev (put them in `.env.local`):
 
-## Learn More
+| Variable | Default | Purpose |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | Laravel API base URL |
+| `NEXT_PUBLIC_REVERB_APP_KEY` | — | WebSocket app key (Reverb) |
+| `NEXT_PUBLIC_REVERB_HOST` | `localhost` | Reverb host |
+| `NEXT_PUBLIC_REVERB_PORT` | `8080` | Reverb port |
+| `NEXT_PUBLIC_REVERB_SCHEME` | `http` | `https` in production |
 
-To learn more about Next.js, take a look at the following resources:
+## How it talks to the backend
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Staff auth** — login returns a Sanctum bearer token; it's kept in a cookie
+  (`riadkit_staff_token`) and attached to every request by `lib/api.ts`. All API calls go
+  through that one module — never call `fetch` on the API directly.
+- **Guest sessions** — the guest portal stores a `session_id` cookie (`riadkit_session_id`)
+  that travels with every portal request; the backend rejects it after check-out (the sticky
+  session protection, explained in the backend README).
+- **Live updates** — Laravel Echo over Reverb (`lib/echo.ts`): new guest requests appear on the
+  reception and owner screens without a refresh. Without a Reverb server everything still
+  works — updates just need a manual refresh.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Conventions
 
-## Deploy on Vercel
+- No global state library — server state lives in hooks, UI state stays local to components.
+- Tailwind 4 + shadcn/ui primitives in `components/ui`; brand styling via Tailwind tokens.
+- Route groups `(auth)`, `(dashboard)`, `(reception)` separate the three audiences.
+- Toasts via `sonner`, drawers via `vaul`, charts via `recharts`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Build
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run build       # production build (Vercel runs this automatically)
+npm run lint
+```

@@ -1,87 +1,156 @@
-# � RiadKit API Documentation
+# RiadKit — Backend (API)
 
-The RiadKit backend is a Laravel 11 REST API. It is divided into two main parts:
-1. **Protected Owner/Staff API** (Secured via Laravel Sanctum).
-2. **Public Guest API** (Secured via QR Tokens and Sticky Session Defense).
+The Laravel API that powers everything: staff authentication, riad management, the catalog,
+guest requests, and live updates over WebSockets. Every response is scoped to a single riad —
+the platform is multi-tenant by design.
 
-**Base URL:** `http://192.168.100.53:8000/api`
+- **Stack:** Laravel 13 · PHP 8.3 · Sanctum · Reverb · Cloudinary · SQLite (dev) / MySQL (prod)
+- **Base URL (local):** `http://localhost:8000/api`
+
+## Setup
+
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed     # demo riad + owner account
+php artisan serve              # http://localhost:8000
+```
+
+Optional processes — live updates need Reverb, queued jobs need the worker:
+
+```bash
+php artisan reverb:start --port=8080
+php artisan queue:listen
+```
+
+Seeding creates a demo account you can sign in with everywhere:
+
+> **owner@riadkit.test / password** — *Riad Jardin de Marrakech*
+
+### Environment variables you'll actually touch
+
+| Key | Local default | Notes |
+|---|---|---|
+| `DB_CONNECTION` | `sqlite` | MySQL in production |
+| `FRONTEND_URL` | `http://localhost:3000` | CORS origin — must match the deployed frontend |
+| `SANCTUM_STATEFUL_DOMAINS` | `localhost:3000` | add the deployed frontend domain |
+| `REVERB_APP_KEY` / `HOST` / `PORT` | `localhost:8080` | must match the frontend's `NEXT_PUBLIC_REVERB_*` |
+| `CLOUDINARY_URL` | — | image uploads (portal branding, menus, …) |
 
 ---
 
-## �️ Authentication
+## API reference
 
-Riad owners and reception staff must authenticate to manage the Riad.
+Two completely separate worlds:
+
+1. **Staff & owner API** — bearer-token auth (Laravel Sanctum).
+2. **Public guest API** — QR token + *sticky session*, no accounts.
+
+### Authentication (staff & owners)
 
 | Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/register` | Creates a new Riad and User (Owner). Returns a Bearer Token. |
-| `POST` | `/login` | Authenticates an existing user and returns a Bearer Token. |
-| `GET` | `/user` | Returns the currently authenticated user payload. *(Requires Token)* |
+|---|---|---|
+| `POST` | `/register` | Creates a riad + owner account, returns a bearer token |
+| `POST` | `/login` | Returns a bearer token |
+| `GET` | `/user` | The authenticated user |
+| `POST` | `/logout` | Revokes the token |
 
-> **Note on Authentication:** For all protected routes below, include the header: 
-> `Authorization: Bearer {your_token_here}`
+Send the token with every protected request:
 
----
+```
+Authorization: Bearer {token}
+```
 
-## �️ Live Reception Desk & Rooms *(Protected)*
+> The web app keeps this token in a cookie (`riadkit_staff_token`) and attaches the header
+> automatically via `frontend/lib/api.ts`. Public self-registration is temporary — manual
+> onboarding (admin-created accounts) is planned.
 
-Manage physical rooms and handle guest check-ins, check-outs, and real-time orders.
+### Dashboard & account *(protected)*
 
-### Room Operations
 | Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/rooms` | List all rooms for the Riad, including `is_active` status and `qr_token`. |
-| `POST` | `/rooms` | Add a physical room. Automatically generates a secure 16-char `qr_token`. |
-| `POST` | `/rooms/{room}/checkin` | Checks a guest in. Updates status to `Occupied` and generates a new `current_session_id`. |
-| `POST` | `/rooms/{room}/checkout` | Checks a guest out. Updates status to `Vacant` and expires the session. |
+|---|---|---|
+| `GET` | `/dashboard` | Owner overview payload |
+| `GET` | `/account` | Profile |
+| `PUT` | `/account/profile` | Update name / email |
+| `PUT` | `/account/password` | Change password |
+| `DELETE` | `/account` | Delete account |
+| `GET` / `PUT` | `/settings` | Riad settings |
 
-### Live Request Feed
+### Rooms & front desk *(protected)*
+
 | Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/requests` | Fetch all `pending` and `in_progress` guest requests for the Live Desk. |
-| `PATCH` | `/requests/{id}` | Update a request status (e.g., mark as `completed` or `cancelled`). |
+|---|---|---|
+| `GET` / `POST` | `/rooms` | List / add rooms (each gets a 16-char `qr_token`) |
+| `PUT` / `DELETE` | `/rooms/{room}` | Edit / remove a room |
+| `GET` | `/rooms/print-batch` | Bulk QR print data |
+| `GET` | `/rooms/{room}/print-data` | QR print data for one room |
+| `POST` | `/rooms/{room}/checkin` | Guest checked in — starts a new session |
+| `POST` | `/rooms/{room}/checkout` | Guest checked out — expires the session |
+| `GET` | `/requests` | Pending + in-progress guest requests (live desk) |
+| `PATCH` | `/requests/{id}` | Update a request's status |
 
----
+### Catalog *(protected, full CRUD)*
 
-## �️ Menus, Services & Excursions *(Protected)*
+| Resource | Endpoints |
+|---|---|
+| `GET`/`POST` | `/categories` — groups for menus and services |
+| `GET`/`POST`/`PUT`/`DELETE` | `/menu-items` — food & drink with pricing |
+| `GET`/`POST`/`PUT`/`DELETE` | `/services` — in-house requests (towels, cleaning…) |
+| `GET`/`POST`/`PUT`/`DELETE` | `/excursions` — local tours with duration & price |
+| `GET`/`POST`/`PUT`/`DELETE` | `/house-rules` |
 
-Standard CRUD operations for the Riad's offerings. All queries are automatically scoped to the authenticated user's `riad_id` for strict multi-tenant security.
+### Staff, uploads & notifications *(protected)*
 
-| Method | Endpoints (Base) | Features |
-| :--- | :--- | :--- |
-| `GET`, `POST`, `PUT`, `DEL` | `/categories` | Group items into Menus or Services. |
-| `GET`, `POST`, `PUT`, `DEL` | `/menu-items` | Food and beverage items with pricing. |
-| `GET`, `POST`, `PUT`, `DEL` | `/services` | In-house requests (e.g., Towels, Cleaning). Includes a `requires_quantity` toggle. |
-| `GET`, `POST`, `PUT`, `DEL` | `/excursions` | Local tours with duration and pricing. |
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET`/`POST`/`PUT`/`DELETE` | `/staff` | Reception accounts for the riad |
+| `POST` / `DELETE` | `/upload`, `/uploads` | Cloudinary image upload / removal |
+| `GET` | `/notifications`, `/notifications/unread-count` | Owner notifications |
+| `PATCH` | `/notifications/read-all`, `/notifications/{id}/read` | Mark read |
 
----
+### Guest portal *(public — QR token + sticky session)*
 
-## � Guest Portal *(Public / Session Secured)*
+Guests never log in. The QR code in the room carries the room's `qr_token`; the browser carries
+a `session_id` cookie created at check-in.
 
-These routes are accessed by guests scanning the QR code in their room. They do not use standard login tokens; instead, they rely on our **Sticky Token Defense**.
+**Bootstrap the portal** — one request returns everything the guest can see:
 
-### 1. Bootstrap the Portal
-`GET /guest/portal/{qr_token}?session_id={cookie_session_id}`
+```
+GET /guest/portal/{qr_token}?session_id={cookie_session_id}
+```
 
-This is the single-request workhorse for the Next.js frontend.
-* **If `session_id` matches the room's active session:** Returns the Riad details, Menus, Services, Excursions, and `session_status: "active"`.
-* **If `session_id` does NOT match or is missing:** Returns the data so they can still browse, but sets `session_status: "expired"` (disabling ordering UI).
+Returns riad info, menus, services, excursions, house rules and a `session_status` flag:
 
-### 2. Submit a Request
-`POST /guest/requests`
+- session matches the room's active check-in → `"active"` (ordering enabled)
+- missing or stale session → `"expired"` (browsing still works, ordering disabled)
 
-Allows an active guest to order food, request services, or book excursions.
+**Submit a request:**
 
-**Request Body:**
+```
+POST /guest/requests
+```
+
 ```json
 {
   "qr_token": "A1B2C3D4E5F6G7H8",
   "session_id": "random16charSession",
-  "type": "menu", // 'menu', 'service', or 'excursion'
+  "type": "menu",
   "item_id": 12,
   "quantity": 2,
   "notes": "No sugar in the mint tea, please."
 }
 ```
-**Sticky Token Defense in Action:** 
-If a guest checks out, the room's session ID changes. If the old guest tries to hit this endpoint using their old `session_id` cookie, the API intercepts it and returns `403 Forbidden`, preventing them from sending fake requests to the new guest's room.
+
+`type` is one of `menu`, `service` or `excursion`.
+
+**Why "sticky":** when a guest checks out, the room's session ID changes. Any request arriving
+with the old `session_id` is rejected with `403` — so a previous guest can never order into the
+new guest's room, even if they kept the QR photo.
+
+## Conventions
+
+- All routes live in `routes/api.php`; protected staff routes sit inside `auth:sanctum`.
+- Controllers return JSON directly — no Form Requests, no API Resources.
+- Multi-tenancy is enforced by scoping every query to the authenticated user's `riad_id`.
+- Code style: Laravel Pint (`vendor/bin/pint`).
