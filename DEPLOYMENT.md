@@ -253,11 +253,14 @@ server {
 
 ## Landing Page Deployment
 
-The `landingpage/` folder is a static site — no server runtime needed. Deploy it as its **own
-Vercel project** from the same repo (root directory: `landingpage/`, no build command needed —
-`css/styles.css` is committed). The Next.js frontend is already live at
-`https://riadkit.vercel.app`; the landing page can later be moved to the root domain
-(e.g. `https://riadkit.com`) with a custom domain if desired.
+The `landingpage/` folder is a static site — no server runtime needed. It is deployed by
+**GitHub Pages** via `.github/workflows/deploy-landing.yml`, which triggers on every push to
+`main` that touches `landingpage/**`, stages only the runtime files (`index.html`, `css/`, `js/`,
+`assets/`) and publishes them. Live at: `https://b00zi.github.io/riadkit/`. The Next.js frontend
+is deployed separately at `https://riadkit.vercel.app`.
+
+> The Pages source must stay **Settings → Pages → Source: GitHub Actions**. "Deploy from a
+> branch" cannot target the `landingpage/` subfolder of a monorepo and will 404.
 
 ### 1. Build the CSS (before every deploy)
 
@@ -267,19 +270,14 @@ npm install       # first time only
 npm run build     # regenerates css/styles.css
 ```
 
-### 2. Deploy
-
-Upload/sync the `landingpage/` folder contents (`index.html`, `css/`, `js/`, `assets/`) to any
-static host — Vercel (as a separate project with root directory `landingpage`), Netlify, Cloud
-flare Pages, or an Nginx `root` directive.
-
-No build step is required by the host as long as `css/styles.css` is committed (it is).
+Commit the regenerated `css/styles.css` — Pages serves the committed file as-is (no host build
+step). Push to `main` and the workflow redeploys automatically.
 
 ### 3. Checklist before going live
 
-- [ ] "Log in" links match the real frontend URL (currently `https://riadkit.vercel.app/login`)
-- [ ] `og:image` / `twitter:image` absolute URLs use the real production domain (placeholder today:
-      `https://riadkit.app/...` in `index.html`)
+- [x] "Log in" links match the real frontend URL (`https://riadkit.vercel.app/login`)
+- [x] `og:image` / `twitter:image` absolute URLs use the real production URL
+      (`https://b00zi.github.io/riadkit/assets/images/riad-courtyard.jpg`)
 - [ ] Decide on photo attribution (see `landingpage/README.md` — CC BY-SA photography)
 
 ---

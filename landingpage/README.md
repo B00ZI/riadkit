@@ -98,9 +98,7 @@ App screenshots in `assets/images/` are RiadKit's own. Fonts: Manrope, SIL Open 
 ## Known gaps / TODO
 
 1. **Demo form has no backend** — wire to a Laravel endpoint, then restore real confirmation copy.
-2. **`og:image` domain is a placeholder** (`https://riadkit.app/...`) — must be replaced with the
-   real production URL before launch; scrapers need an absolute URL.
-3. **Photo attribution** — see above; revisit before going public.
+2. **Photo attribution** — see above; revisit before going public.
 
 ### Notes for working here
 
